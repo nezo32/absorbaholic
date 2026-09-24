@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import dev.absorbaholic.Absorbaholic;
 import dev.absorbaholic.core.AbsorbCaps;
-import dev.absorbaholic.core.LevelStacking;
 import dev.absorbaholic.core.MutationRoll;
 import dev.absorbaholic.net.AbsorbCancelPayload;
 import dev.absorbaholic.net.AbsorbNetworking;
@@ -22,6 +21,7 @@ import dev.absorbaholic.world.AbsorbWorldSettings;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -32,7 +32,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.Container;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -41,8 +40,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.CampfireBlockEntity;
-import net.minecraft.world.level.block.entity.LecternBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
@@ -122,6 +119,7 @@ public final class AbsorbHandler {
 			safely(() -> cancel(player));
 		});
 		ServerTickEvents.END_SERVER_TICK.register(AbsorbHandler::tickAll);
+		AbsorbCooldowns.register();
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> GESTURES.remove(handler.player.getUUID()));
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> GESTURES.clear());
 		UseBlockCallback.EVENT.register((player, level, hand, hit) -> {
@@ -164,7 +162,7 @@ public final class AbsorbHandler {
 			runtime.channel = null;
 			sendState(player, ChannelStatePayload.Status.CANCELLED, channel.elapsed(now));
 		}
-		Check check = validate(player, target, null, now);
+		Check check = validate(player, target, null, now, true);
 		if (!check.ok()) {
 			// a refusal is shown once and holds until release; a silent failure (e.g. the server's view of the
 			// player's aim lags a tick behind) is simply re-validated on the next heartbeat
@@ -235,7 +233,7 @@ public final class AbsorbHandler {
 			sendState(player, ChannelStatePayload.Status.CANCELLED, elapsed);
 			return new TickResult(ChannelStatePayload.Status.CANCELLED, null);
 		}
-		Check check = validate(player, channel.target(), channel.source(), now);
+		Check check = validate(player, channel.target(), channel.source(), now, elapsed >= AbsorbCaps.CHANNEL_TICKS);
 		if (!check.ok()) {
 			runtime.channel = null;
 			ignore(gesture, channel.target(), now);
@@ -261,11 +259,15 @@ public final class AbsorbHandler {
 	// ---- validation --------------------------------------------------------------------------------------------
 
 	/**
-	 * Every rule of absorbing {@code target} right now: mode ON, survival / adventure, pose (sneaking, empty main
-	 * hand), cooldown, the target still resolves (to {@code expectedSource} if given), in range, seen by a server
-	 * raycast, world protection, no container contents, mob health, trait not maxed.
+	 * Every rule of absorbing {@code target} right now: mode ON, survival / adventure, pose (sneaking, both hands
+	 * empty), cooldown, the target still resolves (to {@code expectedSource} if given), in range, seen by a server
+	 * raycast, vanilla break permissions for blocks (spawn protection, world border, adventure mode), world
+	 * protection, no contents that would be lost (container items, bees, mob gear), mob health, trait not maxed.
+	 * {@code breakEvent}: also ask claim / protection mods through Fabric's {@code PlayerBlockBreakEvents.BEFORE}
+	 * (at channel start and at completion only, so a mod's own "you can't break here" is not repeated every tick).
 	 */
-	public static Check validate(ServerPlayer player, AbsorbTarget target, @Nullable Identifier expectedSource, long now) {
+	public static Check validate(ServerPlayer player, AbsorbTarget target, @Nullable Identifier expectedSource, long now,
+			boolean breakEvent) {
 		MinecraftServer server = player.level().getServer();
 		if (!AbsorbWorldSettings.isEnabled(server)) return Check.refuse(AbsorbFeedback.REFUSE_DISABLED);
 		if (player instanceof FakePlayer || !player.gameMode().isSurvival() || !AbsorbRules.poseAllows(player)) return Check.SILENT;
@@ -274,18 +276,17 @@ public final class AbsorbHandler {
 
 		Check check = target.kind() == AbsorbTarget.Kind.ENTITY
 				? validateEntity(player, target, expectedSource)
-				: validateBlock(player, target, expectedSource);
+				: validateBlock(player, target, expectedSource, breakEvent);
 		if (!check.ok()) return check;
 
 		SourceDefinition source = check.resolved().source();
-		int traitLevel = PlayerData.traits(player).get(source.id()).map(TraitEntry::traitLevel).orElse(0);
-		if (!LevelStacking.canAbsorb(traitLevel, source.maxLevel())) {
+		if (!canGrow(player, source)) {
 			return Check.refuse(AbsorbFeedback.REFUSE_MAX_LEVEL, AbsorbFeedback.traitName(source));
 		}
 		return check;
 	}
 
-	private static Check validateBlock(ServerPlayer player, AbsorbTarget target, @Nullable Identifier expected) {
+	private static Check validateBlock(ServerPlayer player, AbsorbTarget target, @Nullable Identifier expected, boolean breakEvent) {
 		ServerLevel level = player.level();
 		BlockPos pos = target.pos();
 		if (!player.isWithinBlockInteractionRange(pos, AbsorbCaps.CHANNEL_RANGE_TOLERANCE) || !level.isLoaded(pos)) return Check.SILENT;
@@ -303,7 +304,20 @@ public final class AbsorbHandler {
 		if (source.isEmpty() || expected != null && !source.get().id().equals(expected)) return Check.SILENT;
 		if (!seesBlock(player, pos, fluid)) return Check.SILENT;
 		if (AbsorbRules.isProtected(level, pos, state)) return Check.refuse(AbsorbFeedback.REFUSE_PROTECTED);
-		if (holdsItems(level.getBlockEntity(pos))) return Check.refuse(AbsorbFeedback.REFUSE_CONTAINER);
+		BlockEntity blockEntity = level.getBlockEntity(pos);
+		if (!player.mayInteract(level, pos) || AbsorbRules.blockActionRestricted(player, level, pos, player.gameMode())
+				|| breakEvent && !PlayerBlockBreakEvents.BEFORE.invoker().beforeBlockBreak(level, player, pos, state, blockEntity)) {
+			return Check.refuse(AbsorbFeedback.REFUSE_NOT_ALLOWED);
+		}
+		switch (AbsorbRules.contents(blockEntity)) {
+			case ITEMS -> {
+				return Check.refuse(AbsorbFeedback.REFUSE_CONTAINER);
+			}
+			case BEES -> {
+				return Check.refuse(AbsorbFeedback.REFUSE_BEES);
+			}
+			case NONE -> {}
+		}
 		return new Check(new Resolved(target, source.get(), AbsorbFeedback.sourceName(source.get()), null), null, null);
 	}
 
@@ -313,9 +327,10 @@ public final class AbsorbHandler {
 		Optional<SourceDefinition> source = SourceRegistry.forEntity(entity.getType());
 		if (source.isEmpty() || expected != null && !source.get().id().equals(expected)) return Check.SILENT;
 		if (!seesEntity(player, entity)) return Check.SILENT;
-		if (entity.getHealth() > AbsorbCaps.MOB_HEALTH_THRESHOLD * entity.getMaxHealth()) {
+		if (!AbsorbRules.weakEnough(entity)) {
 			return Check.refuse(AbsorbFeedback.REFUSE_MOB_HEALTH, Math.round(AbsorbCaps.MOB_HEALTH_THRESHOLD * 100.0F));
 		}
+		if (AbsorbRules.carriesItems(entity)) return Check.refuse(AbsorbFeedback.REFUSE_MOB_ITEMS);
 		return new Check(new Resolved(target, source.get(), AbsorbFeedback.sourceName(source.get()), entity), null, null);
 	}
 
@@ -347,29 +362,36 @@ public final class AbsorbHandler {
 				|| block.getLocation().distanceToSqr(from) >= hit.getLocation().distanceToSqr(from);
 	}
 
-	/** Block entities whose items a silent removal would destroy (D8: refuse instead of losing them). */
-	static boolean holdsItems(@Nullable BlockEntity blockEntity) {
-		if (blockEntity instanceof Container container) return !container.isEmpty();
-		if (blockEntity instanceof LecternBlockEntity lectern) return lectern.hasBook();
-		if (blockEntity instanceof CampfireBlockEntity campfire) return campfire.getItems().stream().anyMatch(s -> !s.isEmpty());
-		return false;
-	}
-
 	// ---- use suppression ---------------------------------------------------------------------------------------
 
 	/**
 	 * True when a vanilla use interaction must be suppressed: the (modded) player is channeling, or makes a valid
-	 * absorb gesture (mode ON, survival / adventure, sneaking with an empty hand) at an absorbable block or entity.
-	 * The cooldown is deliberately not checked: the client intercepts regardless and the server refuses.
+	 * absorb gesture (mode ON, survival / adventure, {@link AbsorbRules#poseAllows}) at an absorbable block or entity
+	 * whose trait can still grow ({@link AbsorbRules#canGrow}); an entity also only at or below the health threshold
+	 * ({@link AbsorbRules#weakEnough}). This mirrors the client's intercept, so vanilla sneak-use on anything else
+	 * (a maxed source's trapdoor, a healthy horse's inventory) is never swallowed. The cooldown is deliberately not
+	 * checked: the client intercepts regardless and the server refuses.
 	 */
 	public static boolean suppressesUse(ServerPlayer player, @Nullable BlockPos pos, @Nullable Entity entity, boolean modded) {
 		if (!modded || player instanceof FakePlayer) return false;
 		PlayerRuntime runtime = player.getAttached(PlayerData.RUNTIME);
 		if (runtime != null && runtime.channel != null) return true;
 		if (!AbsorbWorldSettings.isEnabled(player.level().getServer()) || !player.gameMode().isSurvival() || !AbsorbRules.poseAllows(player)) return false;
-		if (pos != null) return SourceRegistry.forBlock(player.level().getBlockState(pos)).isPresent();
-		if (entity instanceof EnderDragonPart part) entity = part.parentMob;
-		return entity instanceof LivingEntity && !(entity instanceof Player) && SourceRegistry.forEntity(entity.getType()).isPresent();
+		Optional<SourceDefinition> source;
+		if (pos != null) {
+			source = SourceRegistry.forBlock(player.level().getBlockState(pos));
+		} else {
+			if (entity instanceof EnderDragonPart part) entity = part.parentMob;
+			if (!(entity instanceof LivingEntity living) || living instanceof Player || !AbsorbRules.weakEnough(living)) return false;
+			source = SourceRegistry.forEntity(living.getType());
+		}
+		return source.isPresent() && canGrow(player, source.get());
+	}
+
+	/** True while {@code player}'s trait of {@code source} is below its max level. */
+	static boolean canGrow(ServerPlayer player, SourceDefinition source) {
+		int traitLevel = PlayerData.traits(player).get(source.id()).map(TraitEntry::traitLevel).orElse(0);
+		return AbsorbRules.canGrow(traitLevel, source.maxLevel());
 	}
 
 	// ---- helpers -----------------------------------------------------------------------------------------------
