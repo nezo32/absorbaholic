@@ -27,7 +27,6 @@ public final class NotifyClient {
 	/** The title is drawn at 4x scale, the subtitle at 2x; each must fit the GUI width minus the margin. */
 	public static final int TITLE_SCALE = 4, SUBTITLE_SCALE = 2, TITLE_MARGIN = 8;
 	private static final String KEY = "absorbaholic.absorbed.";
-	private static final Component SEPARATOR = Component.literal(" · ");
 
 	private NotifyClient() {}
 
@@ -81,9 +80,14 @@ public final class NotifyClient {
 		Component title = fullTitle ? full : Component.translatable(KEY + "title.short");
 		Component base = fullTitle ? null : sourceName;
 		if (special == null) return new Lines(title, base, actionbar);
-		Component subtitle = base == null ? special : Component.empty().append(base).append(SEPARATOR).append(special);
+		Component subtitle = base == null ? special : joined(base, special);
 		if (fits(font, subtitle, SUBTITLE_SCALE, guiWidth)) return new Lines(title, subtitle, actionbar);
-		return new Lines(title, base, Component.empty().append(actionbar).append(SEPARATOR).append(special));
+		return new Lines(title, base, joined(actionbar, special));
+	}
+
+	/** "a · b" through {@code absorbaholic.absorbed.subtitle.joined} (the separator is translatable too). */
+	private static Component joined(Component a, Component b) {
+		return Component.translatable(KEY + "subtitle.joined", a, b);
 	}
 
 	/** Whether {@code text} fits the screen when drawn at {@code scale}. */

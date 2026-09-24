@@ -21,6 +21,15 @@ import dev.absorbaholic.net.AuraPayload;
 import dev.absorbaholic.net.ChannelStatePayload;
 import dev.absorbaholic.net.WorldStatePayload;
 import dev.absorbaholic.registry.SourceDefinition;
+import dev.absorbaholic.core.SourceKind;
+import dev.absorbaholic.core.Tier;
+import dev.absorbaholic.player.PlayerData;
+import dev.absorbaholic.player.PlayerTraits;
+import dev.absorbaholic.player.TraitEntry;
+import dev.absorbaholic.registry.SourceTargets;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.phys.EntityHitResult;
 import dev.absorbaholic.registry.SourceRegistry;
 import dev.absorbaholic.registry.SourceSummary;
 import dev.absorbaholic.trait.MovementFlagsHolder;
@@ -306,16 +315,8 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 		in.holdKeyFor(o -> o.keyUse, VANILLA_HOLD_TICKS);
 		ctx.waitTicks(5);
 		boolean placed = sp.getServer().computeOnServer(s -> {
-			boolean found = false;
-			for (Direction d : Direction.values()) {
-				BlockPos n = pos.relative(d);
-				if (player(s).level().getBlockState(n).is(Blocks.DIRT)) {
-					found = true;
-					player(s).level().setBlockAndUpdate(n, Blocks.AIR.defaultBlockState());
-				}
-			}
 			player(s).setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
-			return found;
+			return removeDirtAround(s, pos);
 		});
 		check(placed, "hand full: vanilla use must place the held dirt");
 		check(heartbeats(ctx) == beforeHand, "hand full: no absorb heartbeat may be sent");
@@ -333,6 +334,15 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 
 		// 6. an item already in use (a raised off-hand shield) never starts the gesture
 		itemInUse(ctx, sp, pos);
+
+		// 6b. an off-hand item keeps its vanilla use (both hands must be empty)
+		offHandUse(ctx, sp, pos);
+
+		// 6c. a maxed source is not intercepted
+		maxedSource(ctx, sp, pos, note);
+
+		// 6d. a healthy mob keeps its vanilla interaction; at <= 25 % it is a target
+		healthyMob(ctx, sp, pos, note);
 
 		// 7. water in the way is looked through unless the water itself is absorbable
 		throughWater(ctx, sp, pos, note);
@@ -373,6 +383,97 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 		ctx.waitTicks(2);
 	}
 
+	private static void offHandUse(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos) {
+		sp.getServer().runOnServer(s -> player(s).setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.DIRT, 4)));
+		ctx.waitFor(mc -> mc.player.getOffhandItem().is(Items.DIRT), 20 * 5);
+		expectNoGesture(ctx, "off-hand item");
+		long before = heartbeats(ctx);
+		ctx.getInput().holdKeyFor(o -> o.keyUse, VANILLA_HOLD_TICKS);
+		ctx.waitTicks(5);
+		boolean placed = sp.getServer().computeOnServer(s -> {
+			player(s).setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+			return removeDirtAround(s, pos);
+		});
+		check(placed, "off-hand item: vanilla off-hand use must place the dirt");
+		check(heartbeats(ctx) == before, "off-hand item: no absorb heartbeat may be sent");
+		ctx.waitFor(mc -> mc.player.getOffhandItem().isEmpty(), 20 * 5);
+		ctx.getInput().lookAt(pos);
+		ctx.waitTicks(2);
+	}
+
+	private static void maxedSource(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos, SourceDefinition note) {
+		PlayerTraits maxed = PlayerTraits.EMPTY.with(new TraitEntry(note.id(), note.maxLevel(), note.maxLevel(), false, false));
+		sp.getServer().runOnServer(s -> PlayerData.setTraits(player(s), maxed));
+		ctx.runOnClient(mc -> ClientState.setOwnTraits(maxed));
+		try {
+			expectVanillaUse(ctx, sp, pos, "maxed source");
+		} finally {
+			sp.getServer().runOnServer(s -> PlayerData.setTraits(player(s), PlayerTraits.EMPTY));
+			ctx.runOnClient(mc -> ClientState.setOwnTraits(PlayerTraits.EMPTY));
+		}
+		ctx.waitTicks(2);
+		ctx.runOnClient(mc -> {
+			check(ClientState.ownTraits().get(note.id()).isEmpty(), "own traits not restored");
+			check(AbsorbInput.shouldIntercept(mc), "a source below its max level is intercepted again");
+		});
+	}
+
+	private static void healthyMob(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos, SourceDefinition note) {
+		TestInput in = ctx.getInput();
+		BlockPos at = sp.getServer().computeOnServer(s -> player(s).blockPosition().relative(Direction.SOUTH, 2));
+		sp.getServer().runCommand("summon minecraft:wolf " + at.getX() + " " + at.getY() + " " + at.getZ() + " {NoAI:1b}");
+		ctx.waitFor(mc -> entityId(mc, EntityTypes.WOLF) >= 0, 20 * 5);
+		sp.getServer().runOnServer(s -> wolf(s).tame(player(s)));
+		ctx.waitFor(mc -> mc.level.getEntity(entityId(mc, EntityTypes.WOLF)) instanceof Wolf w && w.isTame(), 20 * 5);
+		setSources(ctx, sp, note, entitySource(EntityTypes.WOLF));
+		try {
+			in.lookAt(at);
+			ctx.waitTicks(2);
+			ctx.runOnClient(mc -> check(mc.hitResult instanceof EntityHitResult e && e.getEntity() instanceof Wolf,
+					"test premise: the wolf is under the crosshair, got " + mc.hitResult));
+			expectNoGesture(ctx, "healthy mob");
+			boolean satBefore = sp.getServer().computeOnServer(s -> wolf(s).isOrderedToSit());
+			long before = heartbeats(ctx);
+			in.holdKeyFor(o -> o.keyUse, 3); // one interaction (vanilla repeats every 4 ticks)
+			ctx.waitTicks(5);
+			boolean satAfter = sp.getServer().computeOnServer(s -> wolf(s).isOrderedToSit());
+			check(satAfter != satBefore, "healthy tamed wolf: vanilla sneak-use must toggle sitting");
+			check(heartbeats(ctx) == before, "healthy mob: no absorb heartbeat may be sent");
+
+			sp.getServer().runOnServer(s -> wolf(s).setHealth(1.0F));
+			ctx.waitFor(mc -> mc.level.getEntity(entityId(mc, EntityTypes.WOLF)) instanceof Wolf w && w.getHealth() <= 1.0F, 20 * 5);
+			ctx.runOnClient(mc -> {
+				AbsorbTarget t = AbsorbInput.target(mc);
+				check(AbsorbTarget.entity(entityId(mc, EntityTypes.WOLF)).equals(t), "a mob at <= 25 % health is a target, got " + t);
+			});
+		} finally {
+			sp.getServer().runOnServer(s -> wolf(s).discard());
+			setSources(ctx, sp, note);
+		}
+		ctx.waitFor(mc -> entityId(mc, EntityTypes.WOLF) < 0, 20 * 5);
+		in.lookAt(pos);
+		ctx.waitTicks(2);
+	}
+
+	private static Wolf wolf(MinecraftServer s) {
+		for (Entity e : player(s).level().getAllEntities()) {
+			if (e instanceof Wolf w) return w;
+		}
+		throw new AssertionError("no wolf on the server");
+	}
+
+	private static boolean removeDirtAround(MinecraftServer s, BlockPos pos) {
+		boolean found = false;
+		for (Direction d : Direction.values()) {
+			BlockPos n = pos.relative(d);
+			if (player(s).level().getBlockState(n).is(Blocks.DIRT)) {
+				found = true;
+				player(s).level().setBlockAndUpdate(n, Blocks.AIR.defaultBlockState());
+			}
+		}
+		return found;
+	}
+
 	private static void throughWater(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos, SourceDefinition note) {
 		BlockPos water = pos.west(); // between the eyes and the note block
 		sp.getServer().runOnServer(s -> {
@@ -387,10 +488,17 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 				AbsorbTarget t = AbsorbInput.target(mc);
 				check(AbsorbTarget.block(pos).equals(t), "water in the way must be looked through, got " + t);
 			});
-			setSources(ctx, sp, note, source(Blocks.WATER));
+			// water is #absorbaholic:unabsorbable; an absorbable fluid (lava) in the same spot is the target itself
+			sp.getServer().runOnServer(s -> player(s).level().setBlockAndUpdate(water, Blocks.LAVA.defaultBlockState()));
+			ctx.waitFor(mc -> mc.level.getBlockState(water).is(Blocks.LAVA), 20 * 5);
 			ctx.runOnClient(mc -> {
 				AbsorbTarget t = AbsorbInput.target(mc);
-				check(AbsorbTarget.fluid(water).equals(t), "an absorbable water source must be the target, got " + t);
+				check(AbsorbTarget.block(pos).equals(t), "lava without a source must be looked through too, got " + t);
+			});
+			setSources(ctx, sp, note, source(Blocks.LAVA));
+			ctx.runOnClient(mc -> {
+				AbsorbTarget t = AbsorbInput.target(mc);
+				check(AbsorbTarget.fluid(water).equals(t), "an absorbable lava source must be the target, got " + t);
 			});
 		} finally {
 			setSources(ctx, sp, note);
@@ -425,7 +533,8 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 	}
 
 	private static void auraUnload(ClientGameTestContext ctx, TestSingleplayerContext sp) {
-		sp.getServer().runCommand("summon minecraft:pig ~3 ~ ~3 {NoAI:1b}");
+		BlockPos at = sp.getServer().computeOnServer(s -> player(s).blockPosition().relative(Direction.NORTH, 3));
+		sp.getServer().runCommand("summon minecraft:pig " + at.getX() + " " + at.getY() + " " + at.getZ() + " {NoAI:1b}");
 		ctx.waitFor(mc -> pigId(mc) >= 0, 20 * 5);
 		int pigId = ctx.computeOnClient(AbsorbNotifyClientGameTest::pigId);
 		int self = ctx.computeOnClient(mc -> mc.player.getId());
@@ -443,8 +552,12 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 	}
 
 	private static int pigId(Minecraft mc) {
+		return entityId(mc, EntityTypes.PIG);
+	}
+
+	private static int entityId(Minecraft mc, EntityType<?> type) {
 		for (Entity e : mc.level.entitiesForRendering()) {
-			if (e.getType() == EntityTypes.PIG) return e.getId();
+			if (e.getType() == type) return e.getId();
 		}
 		return -1;
 	}
@@ -580,6 +693,14 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 	private static SourceDefinition source(Block block) {
 		Identifier id = BuiltInRegistries.BLOCK.getKey(block);
 		return TestSupport.blockSource("notify_client_" + id.getPath(), id, 3, List.of(), List.of(), List.of(), List.of());
+	}
+
+	private static SourceDefinition entitySource(EntityType<?> type) {
+		Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
+		return new SourceDefinition(Identifier.fromNamespaceAndPath("absorbaholic_test", "notify_client_" + id.getPath()),
+				new SourceTargets(SourceKind.ENTITY, List.of(id), List.of()), Optional.empty(), 0xFFFFFF, Tier.COMMON, 3,
+				new SourceDefinition.Side("test_trait", List.of(), List.of()),
+				new SourceDefinition.Side("test_weakness", List.of(), List.of()));
 	}
 
 	private static ServerPlayer player(MinecraftServer s) {
