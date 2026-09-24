@@ -17,7 +17,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Removes an absorbed block without drops, experience or container spill (flags 2|16|32|256, research §10): the
  * other half of a two-part block (doors, tall plants, beds) goes with it, and only afterwards do the neighbours get
- * their updates (so the partner is never "broken" with loot). A waterlogged block leaves its water behind; an
+ * their updates, including the removed block's own removal hook (so the partner is never "broken" with loot and
+ * no redstone keeps ghost power). A waterlogged block leaves its water behind; an
  * absorbed fluid source becomes air.
  */
 public final class BlockRemoval {
@@ -40,13 +41,20 @@ public final class BlockRemoval {
 		BlockPos partner = partner(state, pos);
 		if (partner != null && level.getBlockState(partner).is(state.getBlock())) parts.add(partner);
 
+		List<BlockState> removed = new ArrayList<>(parts.size());
 		for (BlockPos p : parts) {
+			BlockState old = level.getBlockState(p);
 			BlockState replacement = p.equals(pos) && fluid
 					? Blocks.AIR.defaultBlockState()
-					: level.getBlockState(p).getFluidState().createLegacyBlock();
+					: old.getFluidState().createLegacyBlock();
 			level.setBlock(p, replacement, FLAGS);
+			removed.add(old);
 		}
-		for (BlockPos p : parts) {
+		for (int i = 0; i < parts.size(); i++) {
+			BlockPos p = parts.get(i);
+			// the block's own removal hook (flag 1 is off): levers, buttons, repeaters, torches … update what they
+			// powered, so nothing keeps ghost power; container spill stays skipped (that is preRemoveSideEffects)
+			removed.get(i).affectNeighborsAfterRemoval(level, p, false);
 			level.updateNeighborsAt(p, state.getBlock());
 			level.getBlockState(p).updateNeighbourShapes(level, p, Block.UPDATE_ALL);
 		}
