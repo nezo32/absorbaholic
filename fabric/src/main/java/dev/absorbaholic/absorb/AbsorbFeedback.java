@@ -48,11 +48,18 @@ public final class AbsorbFeedback {
 	public static final String REFUSE_CONTAINER = "absorbaholic.refuse.container_not_empty";
 	public static final String REFUSE_MOB_HEALTH = "absorbaholic.refuse.mob_health";
 	public static final String REFUSE_MAX_LEVEL = "absorbaholic.refuse.max_level";
+	public static final String REFUSE_NOT_ALLOWED = "absorbaholic.refuse.not_allowed";
+	public static final String REFUSE_BEES = "absorbaholic.refuse.bees_inside";
+	public static final String REFUSE_MOB_ITEMS = "absorbaholic.refuse.mob_carries_items";
 
 	public static final String TITLE_SHORT = "absorbaholic.absorbed.title.short";
 	public static final String ACTIONBAR = "absorbaholic.absorbed.actionbar";
 	public static final String ACTIONBAR_PURE = "absorbaholic.absorbed.actionbar.pure";
 	public static final String EVICTED = "absorbaholic.message.evicted";
+	/** "%s · %s": source name and special line in the vanilla-client subtitle. */
+	public static final String SUBTITLE_JOINED = "absorbaholic.absorbed.subtitle.joined";
+	/** ", ": separator between list items (evicted sources). */
+	public static final String LIST_SEPARATOR = "absorbaholic.list.separator";
 
 	/** Title timing of the vanilla fallback (fade in, stay, fade out). */
 	public static final int TITLE_FADE_IN = 10;
@@ -100,7 +107,7 @@ public final class AbsorbFeedback {
 		if (evicted.isEmpty()) return Optional.empty();
 		MutableComponent names = Component.empty();
 		for (int i = 0; i < evicted.size(); i++) {
-			if (i > 0) names.append(", ");
+			if (i > 0) names.append(Texts.tr(LIST_SEPARATOR));
 			Identifier id = evicted.get(i);
 			names.append(SourceRegistry.byId(id).map(AbsorbFeedback::traitName).orElseGet(() -> Component.literal(id.toString())));
 		}
@@ -121,8 +128,9 @@ public final class AbsorbFeedback {
 		if (modded) {
 			ServerPlayNetworking.send(player, new AbsorbedPayload(sourceName, actionbar, outcome, notice));
 		} else {
-			MutableComponent subtitle = sourceName.copy();
-			specialLine(outcome).ifPresent(line -> subtitle.append(" · ").append(line));
+			Component subtitle = specialLine(outcome)
+					.<Component>map(line -> Texts.tr(SUBTITLE_JOINED, sourceName, line))
+					.orElse(sourceName);
 			player.connection.send(new ClientboundSetTitlesAnimationPacket(TITLE_FADE_IN, TITLE_STAY, TITLE_FADE_OUT));
 			player.connection.send(new ClientboundSetSubtitleTextPacket(subtitle));
 			player.connection.send(new ClientboundSetTitleTextPacket(Texts.tr(TITLE_SHORT)));

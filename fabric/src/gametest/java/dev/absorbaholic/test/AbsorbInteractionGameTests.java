@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.mojang.authlib.GameProfile;
+import dev.absorbaholic.absorb.AbsorbCooldowns;
 import dev.absorbaholic.absorb.AbsorbFeedback;
 import dev.absorbaholic.absorb.AbsorbHandler;
 import dev.absorbaholic.absorb.AbsorbRules;
@@ -27,6 +28,7 @@ import dev.absorbaholic.registry.SourceRegistry;
 import dev.absorbaholic.registry.SourceTargets;
 import dev.absorbaholic.world.AbsorbWorldSettings;
 import io.netty.channel.embedded.EmbeddedChannel;
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -54,7 +56,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.bee.Bee;
+import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragonPart;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -65,6 +71,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.entity.BeehiveBlockEntity;
+import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
@@ -99,8 +108,12 @@ public class AbsorbInteractionGameTests {
 
 	/** Survival mock player (as TestSupport.survivalPlayer, keeping its channel), sneaking at FEET, empty-handed. */
 	private static Mock mock(GameTestHelper h) {
+		return mock(h, UUID.randomUUID());
+	}
+
+	private static Mock mock(GameTestHelper h, UUID id) {
 		ServerLevel level = h.getLevel();
-		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "absorb-mock"), false);
+		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(id, "absorb-mock"), false);
 		ServerPlayer p = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
 		Connection connection = new Connection(PacketFlow.SERVERBOUND);
 		EmbeddedChannel channel = new EmbeddedChannel(connection);
@@ -625,7 +638,8 @@ public class AbsorbInteractionGameTests {
 			AbsorbHandler.cancel(p);
 			p.setGameMode(GameType.ADVENTURE);
 			p.setShiftKeyDown(true);
-			begin(h, p, s.target(), s.start() + 30); // adventure is allowed
+			h.assertValueEqual(AbsorbHandler.start(p, s.target(), s.start() + 30).reasonKey(), AbsorbFeedback.REFUSE_NOT_ALLOWED,
+					"adventure mode may not break blocks");
 			AbsorbHandler.cancel(p);
 			h.assertBlockPresent(Blocks.AMETHYST_BLOCK, TARGET);
 		});
@@ -693,7 +707,9 @@ public class AbsorbInteractionGameTests {
 			h.assertTrue(out.stream().anyMatch(o -> o instanceof ClientboundSystemChatPacket c && !c.overlay()
 					&& key(c.content()).equals("absorbaholic.announce.mutate_weakness")), "mutation broadcast in chat");
 			h.assertTrue(out.stream().anyMatch(o -> o instanceof ClientboundSetSubtitleTextPacket s
-					&& s.text().getSiblings().stream().anyMatch(c -> key(c).equals("absorbaholic.absorbed.subtitle.mutate_weakness"))),
+					&& s.text().getContents() instanceof TranslatableContents tc && tc.getKey().equals(AbsorbFeedback.SUBTITLE_JOINED)
+					&& tc.getArgs().length == 2 && tc.getArgs()[1] instanceof Component line
+					&& key(line).equals("absorbaholic.absorbed.subtitle.mutate_weakness")),
 					"special subtitle line");
 
 			// pure: r = 0.01; trait mutation: r = 0.1, coin = 0.2 (via the completion path)
@@ -814,7 +830,213 @@ public class AbsorbInteractionGameTests {
 			h.assertFalse(AbsorbHandler.suppressesUse(p, h.absolutePos(TARGET.east()), null, true), "not absorbable");
 			p.setShiftKeyDown(false);
 			h.assertFalse(AbsorbHandler.suppressesUse(p, barrel, null, true), "not sneaking");
+			p.setShiftKeyDown(true);
+			p.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SHIELD));
+			h.assertFalse(AbsorbRules.poseAllows(p), "an off-hand item breaks the pose");
+			h.assertFalse(AbsorbHandler.suppressesUse(p, barrel, null, true), "off-hand use is never swallowed");
+			p.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+			h.assertTrue(AbsorbHandler.suppressesUse(p, barrel, null, true), "gesture again");
+			PlayerData.setTraits(p, PlayerTraits.EMPTY.with(new TraitEntry(source.id(), 3, 3, false, false)));
+			h.assertFalse(AbsorbHandler.suppressesUse(p, barrel, null, true), "a maxed source keeps its vanilla use");
 		});
+		SourceDefinition pigSource = entitySource("use_guard_pig", BuiltInRegistries.ENTITY_TYPE.getKey(EntityTypes.PIG), 3);
+		withSources(h, List.of(pigSource), () -> {
+			Mob pig = h.spawn(EntityTypes.PIG, Vec3.atBottomCenterOf(TARGET));
+			pig.setNoAi(true);
+			ServerPlayer p = mock(h).player();
+			h.assertFalse(AbsorbHandler.suppressesUse(p, null, pig, true), "a healthy mob keeps its vanilla use");
+			pig.setHealth(1.0F);
+			h.assertTrue(AbsorbRules.weakEnough(pig), "weak enough");
+			h.assertTrue(AbsorbHandler.suppressesUse(p, null, pig, true), "a weakened mob is intercepted");
+			pig.discard();
+		});
+		h.succeed();
+	}
+
+	// ---- permissions and contents (review round 1) ------------------------------------------------------------
+
+	/** Claim-mod stand-in: a BEFORE listener that vetoes breaking exactly this position (null = none). */
+	private static volatile BlockPos vetoPos;
+
+	static {
+		PlayerBlockBreakEvents.BEFORE.register((level, player, pos, state, blockEntity) -> !pos.equals(vetoPos));
+	}
+
+	@GameTest
+	public void claimModVetoRefusesAtStartAndCompletion(GameTestHelper h) {
+		SourceDefinition source = blockSource("veto_block", Blocks.AMETHYST_BLOCK, 3);
+		withSources(h, List.of(source), () -> {
+			h.setBlock(TARGET, Blocks.AMETHYST_BLOCK);
+			Mock m = mock(h);
+			ServerPlayer p = m.player();
+			lookAtBlock(h, p, TARGET);
+			BlockPos abs = h.absolutePos(TARGET);
+			AbsorbTarget target = AbsorbTarget.block(abs);
+			long t = now(h);
+			try {
+				vetoPos = abs;
+				h.assertValueEqual(AbsorbHandler.start(p, target, t).reasonKey(), AbsorbFeedback.REFUSE_NOT_ALLOWED, "vetoed at start");
+				AbsorbHandler.cancel(p);
+				vetoPos = null;
+				begin(h, p, target, t + 1);
+				h.assertValueEqual(hold(p, target, t + 1, AbsorbCaps.CHANNEL_TICKS - 1, NORMAL_ROLL).status(),
+						ChannelStatePayload.Status.PROGRESS, "no veto: channel runs");
+				vetoPos = abs; // a claim appears mid-channel
+				AbsorbHandler.start(p, target, t + 1 + AbsorbCaps.CHANNEL_TICKS);
+				AbsorbHandler.TickResult r = AbsorbHandler.tick(p, t + 1 + AbsorbCaps.CHANNEL_TICKS, NORMAL_ROLL);
+				h.assertValueEqual(r.status(), ChannelStatePayload.Status.CANCELLED, "vetoed at completion");
+				h.assertValueEqual(r.reasonKey(), AbsorbFeedback.REFUSE_NOT_ALLOWED, "reason");
+			} finally {
+				vetoPos = null;
+			}
+			h.assertBlockPresent(Blocks.AMETHYST_BLOCK, TARGET);
+			h.assertTrue(PlayerData.traits(p).isEmpty(), "nothing absorbed");
+		});
+		h.succeed();
+	}
+
+	@GameTest
+	public void worldBorderRefusesBlocks(GameTestHelper h) {
+		SourceDefinition source = blockSource("border_block", Blocks.AMETHYST_BLOCK, 3);
+		withSources(h, List.of(source), () -> {
+			h.setBlock(TARGET, Blocks.AMETHYST_BLOCK);
+			Mock m = mock(h);
+			ServerPlayer p = m.player();
+			lookAtBlock(h, p, TARGET);
+			BlockPos abs = h.absolutePos(TARGET);
+			WorldBorder border = h.getLevel().getWorldBorder();
+			double x = border.getCenterX();
+			double z = border.getCenterZ();
+			double size = border.getSize();
+			try {
+				border.setCenter(abs.getX() + 1000.0, abs.getZ() + 1000.0);
+				border.setSize(16.0);
+				h.assertValueEqual(AbsorbHandler.start(p, AbsorbTarget.block(abs), now(h)).reasonKey(),
+						AbsorbFeedback.REFUSE_NOT_ALLOWED, "outside the world border");
+			} finally {
+				border.setCenter(x, z);
+				border.setSize(size);
+			}
+			AbsorbHandler.cancel(p);
+			begin(h, p, AbsorbTarget.block(abs), now(h) + 1);
+			AbsorbHandler.cancel(p);
+		});
+		h.succeed();
+	}
+
+	@GameTest
+	public void adventureMayAbsorbMobs(GameTestHelper h) {
+		SourceDefinition source = entitySource("adventure_pig", BuiltInRegistries.ENTITY_TYPE.getKey(EntityTypes.PIG), 3);
+		withSources(h, List.of(source), () -> {
+			Mob pig = h.spawn(EntityTypes.PIG, Vec3.atBottomCenterOf(TARGET));
+			pig.setNoAi(true);
+			pig.setHealth(1.0F);
+			Mock m = mock(h);
+			m.player().setGameMode(GameType.ADVENTURE);
+			m.player().setShiftKeyDown(true);
+			lookAt(m.player(), pig.getBoundingBox().getCenter());
+			absorbFully(h, m.player(), AbsorbTarget.entity(pig.getId()), NORMAL_ROLL);
+			h.assertTrue(pig.isRemoved(), "pig absorbed in adventure");
+		});
+		h.succeed();
+	}
+
+	@GameTest
+	public void mobWithItemsRefused(GameTestHelper h) {
+		SourceDefinition source = entitySource("geared_pig", BuiltInRegistries.ENTITY_TYPE.getKey(EntityTypes.PIG), 3);
+		withSources(h, List.of(source), () -> {
+			Mob pig = h.spawn(EntityTypes.PIG, Vec3.atBottomCenterOf(TARGET));
+			pig.setNoAi(true);
+			pig.setHealth(1.0F);
+			pig.setItemSlot(EquipmentSlot.SADDLE, new ItemStack(Items.SADDLE));
+			Mock m = mock(h);
+			lookAt(m.player(), pig.getBoundingBox().getCenter());
+			AbsorbTarget target = AbsorbTarget.entity(pig.getId());
+			h.assertValueEqual(AbsorbHandler.start(m.player(), target, now(h)).reasonKey(), AbsorbFeedback.REFUSE_MOB_ITEMS, "saddled pig");
+			h.assertTrue(pig.isAlive() && !pig.isRemoved(), "pig untouched");
+			AbsorbHandler.cancel(m.player());
+			pig.setItemSlot(EquipmentSlot.SADDLE, ItemStack.EMPTY);
+			begin(h, m.player(), target, now(h) + 1);
+			AbsorbHandler.cancel(m.player());
+			pig.discard();
+
+			AbstractChestedHorse donkey = h.spawn(EntityTypes.DONKEY, new Vec3(5.5, 1, 5.5));
+			h.assertFalse(AbsorbRules.carriesItems(donkey), "bare donkey");
+			donkey.setChest(true);
+			h.assertTrue(AbsorbRules.carriesItems(donkey), "donkey with a chest");
+			donkey.discard();
+		});
+		h.succeed();
+	}
+
+	@GameTest
+	public void hiveWithBeesRefused(GameTestHelper h) {
+		SourceDefinition source = blockSource("hive_block", Blocks.BEEHIVE, 3);
+		withSources(h, List.of(source), () -> {
+			h.setBlock(TARGET, Blocks.BEEHIVE);
+			BeehiveBlockEntity hive = (BeehiveBlockEntity) h.getLevel().getBlockEntity(h.absolutePos(TARGET));
+			Bee bee = h.spawn(EntityTypes.BEE, new Vec3(5.5, 2, 5.5));
+			hive.addOccupant(bee);
+			h.assertValueEqual(hive.getOccupantCount(), 1, "bee inside");
+			Mock m = mock(h);
+			lookAtBlock(h, m.player(), TARGET);
+			h.assertValueEqual(AbsorbHandler.start(m.player(), AbsorbTarget.block(h.absolutePos(TARGET)), now(h)).reasonKey(),
+					AbsorbFeedback.REFUSE_BEES, "bees inside");
+			h.assertBlockPresent(Blocks.BEEHIVE, TARGET);
+		});
+		h.succeed();
+	}
+
+	@GameTest
+	public void endBedrockAlwaysProtected(GameTestHelper h) {
+		BlockState bedrock = Blocks.BEDROCK.defaultBlockState();
+		h.assertFalse(AbsorbRules.isProtected(h.getLevel(), new BlockPos(0, 64, 0), bedrock), "overworld mid-height bedrock");
+		ServerLevel end = h.getLevel().getServer().getLevel(Level.END);
+		if (end != null) h.assertTrue(AbsorbRules.isProtected(end, new BlockPos(0, 64, 0), bedrock), "End podium bedrock");
+		h.succeed();
+	}
+
+	@GameTest(maxTicks = 40)
+	public void removalUpdatesPoweredNeighbours(GameTestHelper h) {
+		SourceDefinition source = blockSource("lever_block", Blocks.LEVER, 3);
+		BlockPos lever = TARGET.above();
+		BlockPos lamp = TARGET.south();
+		withSources(h, List.of(source), () -> {
+			h.setBlock(TARGET, Blocks.STONE);
+			h.setBlock(lever, Blocks.LEVER.defaultBlockState()
+					.setValue(BlockStateProperties.ATTACH_FACE, AttachFace.FLOOR)
+					.setValue(BlockStateProperties.POWERED, true));
+			h.setBlock(lamp, Blocks.REDSTONE_LAMP.defaultBlockState().setValue(BlockStateProperties.LIT, true));
+			Mock m = mock(h);
+			lookAt(m.player(), h.absoluteVec(new Vec3(1.5, 2.05, 3.5)));
+			absorbFully(h, m.player(), AbsorbTarget.block(h.absolutePos(lever)), NORMAL_ROLL);
+			h.assertBlockPresent(Blocks.AIR, lever);
+		});
+		// the lamp was lit only through the lever's strongly powered stone; it must notice the lever is gone
+		h.succeedWhen(() -> h.assertBlockProperty(lamp, BlockStateProperties.LIT, false));
+	}
+
+	@GameTest
+	public void cooldownsSurviveRelogAndDeath(GameTestHelper h) {
+		UUID id = UUID.randomUUID();
+		Mock first = mock(h, id);
+		long now = now(h);
+		Identifier ability = Identifier.fromNamespaceAndPath("absorbaholic_test", "ability/cooldown");
+		PlayerData.runtime(first.player()).absorbCooldownUntil = now + 150;
+		PlayerData.runtime(first.player()).abilityCooldowns.put(ability, now + 90);
+
+		// death / End exit: COPY_FROM carries the deadlines over
+		Mock respawned = mock(h);
+		AbsorbCooldowns.copy(first.player(), respawned.player());
+		h.assertValueEqual(PlayerData.runtime(respawned.player()).absorbCooldownUntil, now + 150, "absorb cooldown after death");
+		h.assertValueEqual(PlayerData.runtime(respawned.player()).abilityCooldowns.get(ability), now + 90, "ability cooldown after death");
+
+		// relog: parked on disconnect, restored by the JOIN of the new entity with the same UUID
+		AbsorbCooldowns.park(first.player());
+		h.getLevel().getServer().getPlayerList().remove(first.player());
+		Mock rejoined = mock(h, id);
+		h.assertValueEqual(PlayerData.runtime(rejoined.player()).absorbCooldownUntil, now + 150, "absorb cooldown after relog");
+		h.assertValueEqual(PlayerData.runtime(rejoined.player()).abilityCooldowns.get(ability), now + 90, "ability cooldown after relog");
 		h.succeed();
 	}
 
