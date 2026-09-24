@@ -7,6 +7,7 @@
 		"ExperienceOrbMixin",
 		"FoodDataMixin",
 		"FoodPropertiesMixin",
+		"HealOrHarmMobEffectMixin",
 		"ItemStackMixin",
 		"LevelStorageAccessMixin",
 		"LivingEntityMixin",

@@ -10,6 +10,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.absorbaholic.core.AbsorbCaps;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -36,10 +37,10 @@ import net.minecraft.world.level.block.state.BlockState;
  * <li>{@code "condition_blocks"}: block ids / #tags for {@code on_block};</li>
  * <li>{@code "condition_entities"}, {@code "condition_radius"} (default 8): entity type ids / #tags for {@code near_entity}.</li>
  * </ul>
- * No fields = always true. The catalog asks tick behaviors to evaluate conditions every 10 ticks (cache in the
- * behavior's due tick); hit-time behaviors (damage_multiplier) evaluate at hit time.
- * No fields = always true. Unknown names fail decoding (the source is skipped with a WARN). Names are in
- * {@link #PREDICATES}; add new ones there (owner: WP-BEH-B).
+ * No fields = always true. Tick and factor behaviors cache the result for {@code AbsorbCaps.CONDITION_CACHE_TICKS}
+ * per player and entry ({@code trait.behavior.EntryStates}); hit-time behaviors (damage_multiplier) evaluate at hit
+ * time. Unknown names fail decoding (the source is skipped with a WARN). Names are in {@link #PREDICATES}; add new
+ * ones there (owner: WP-BEH-B).
  */
 public final class Condition {
 	public static final Condition ALWAYS = new Condition(List.of(), List.of(), List.of(), List.of(), 8.0);
@@ -133,8 +134,12 @@ public final class Condition {
 		for (String n : names) {
 			String name = n.startsWith("!") ? n.substring(1) : n;
 			if (!PREDICATES.containsKey(name)) return DataResult.error(() -> "unknown condition \"" + name + "\"");
+			if (name.equals("near_entity") && entities.isEmpty()) return DataResult.error(() -> "near_entity needs condition_entities");
+			if (name.equals("on_block") && blocks.isEmpty()) return DataResult.error(() -> "on_block needs condition_blocks");
 		}
-		if (radius <= 0 || radius > 16) return DataResult.error(() -> "condition_radius must be in (0, 16]");
+		if (!(radius > 0) || radius > AbsorbCaps.CONDITION_MAX_RADIUS) {
+			return DataResult.error(() -> "condition_radius must be in (0, " + AbsorbCaps.CONDITION_MAX_RADIUS + "]");
+		}
 		for (String b : blocks) {
 			if (Identifier.tryParse(b.startsWith("#") ? b.substring(1) : b) == null) return DataResult.error(() -> "bad condition_blocks entry " + b);
 		}
