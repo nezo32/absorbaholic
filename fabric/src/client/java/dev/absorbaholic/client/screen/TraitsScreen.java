@@ -94,12 +94,11 @@ public class TraitsScreen extends Screen {
 	}
 
 	/**
-	 * Opens the screen for a {@code TraitsPayload} with {@code openScreen} (answer to {@code /absorbaholic traits}).
-	 * Call on the render thread (payload handlers run there). Replaces any open screen; the chat screen that ran the
-	 * command closes itself right after, so this is deferred by one task.
+	 * Opens the screen for a {@code TraitsPayload} with {@code openScreen} (answer to {@code /absorbaholic traits}),
+	 * installed as {@code ClientNetworking}'s traits screen opener. Render thread. Replaces any open screen; deferred by
+	 * one task so a chat screen that is still closing after the command cannot close it again.
 	 */
-	public static void open(TraitsPayload payload) {
-		Minecraft mc = Minecraft.getInstance();
+	public static void open(Minecraft mc, TraitsPayload payload) {
 		boolean own = mc.player != null && mc.player.getUUID().equals(payload.owner());
 		mc.schedule(() -> mc.gui.setScreen(new TraitsScreen(null, Component.literal(payload.ownerName()), payload.traits(), own)));
 	}

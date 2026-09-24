@@ -75,6 +75,7 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 				ctx.waitFor(mc -> mc.player != null, 20 * 60);
 				sp.getConnection().waitForChunksRender();
 				sp.getServer().runCommand("time set noon");
+				sp.getServer().runCommand("gamerule send_command_feedback false"); // keep chat off the screenshots
 				ctx.waitTicks(20);
 				injectState(ctx);
 
@@ -278,7 +279,12 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 			ctx.waitTicks(2);
 			if (ctx.computeOnClient(mc -> AbsorbHud.currentHint()) != null) throw new AssertionError("hint shown with mode off");
 			ctx.runOnClient(mc -> ClientState.setWorld(new WorldStatePayload(true, true, true, 20)));
+			// remove the cow and whatever it dropped (picked-up beef would fill the hand for the next pass)
 			sp.getServer().runCommand("kill @e[type=minecraft:cow]");
+			ctx.waitTicks(5);
+			sp.getServer().runCommand("kill @e[type=minecraft:item]");
+			sp.getServer().runCommand("clear @p");
+			ctx.waitFor(mc -> mc.player.getInventory().isEmpty());
 		} finally {
 			ctx.getInput().releaseKey(o -> o.keyShift);
 		}
@@ -330,9 +336,10 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 	// ---- traits screen ----
 
 	private static void traitsScreen(ClientGameTestContext ctx, String lang) {
-		ctx.getInput().setCursorPos(0, 0);
 		ctx.getInput().pressKey(o -> TraitsKeybind.key());
 		ctx.waitForScreen(TraitsScreen.class);
+		ctx.getInput().setCursorPos(0, 0); // opening a screen centres the cursor over a row: keep the overview tooltip-free
+		ctx.waitTicks(1);
 		int rows = ctx.computeOnClient(mc -> ((TraitsScreen) mc.gui.screen()).rowCount());
 		if (rows != ownTraits().size()) throw new AssertionError("rows " + rows + ", expected " + ownTraits().size());
 		String count = Component.translatable("absorbaholic.screen.traits.count", ownTraits().size(), 20).getString();
@@ -360,7 +367,7 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 		ctx.waitForScreen(null);
 
 		// another player's traits from the /absorbaholic traits payload
-		ctx.runOnClient(mc -> TraitsScreen.open(new TraitsPayload(UUID.randomUUID(), "Notch",
+		ctx.runOnClient(mc -> TraitsScreen.open(mc, new TraitsPayload(UUID.randomUUID(), "Notch",
 				new PlayerTraits(List.of(new TraitEntry(OBSIDIAN, 2, 1, false, true))), true)));
 		ctx.waitForScreen(TraitsScreen.class);
 		stringWidget(ctx, Component.translatable("absorbaholic.screen.traits.title", "Notch").getString());

@@ -53,7 +53,7 @@ public final class AbsorbHud {
 	/** Hint box: gap between crosshair centre and box text, line height, max text width. */
 	private static final int HINT_OFFSET_X = 20;
 	private static final int LINE_HEIGHT = 10;
-	private static final int MAX_HINT_WIDTH = 180;
+	private static final int MAX_HINT_WIDTH = 200;
 	/** Progress ring radii around the crosshair centre (GUI pixels). */
 	private static final float RING_INNER = 9.5F;
 	private static final float RING_OUTER = 11.5F;
