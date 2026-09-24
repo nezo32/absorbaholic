@@ -1,0 +1,26 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:allay"],
+  "color": "#00DAFF",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "collector",
+    "behaviors": [
+      {
+        "type": "absorbaholic:item_magnet",
+        "radius": [4, 6, 8]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "delicate",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-2, -4, -6]
+      }
+    ]
+  }
+}

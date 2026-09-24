@@ -1,0 +1,38 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:frog"],
+  "color": "#D07444",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "big_leap",
+    "attributes": [
+      {
+        "attribute": "minecraft:jump_strength",
+        "operation": "add_multiplied_base",
+        "amount": [0.15, 0.3, 0.45]
+      },
+      {
+        "attribute": "minecraft:safe_fall_distance",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "cold_blooded",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "cold"
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_freezing",
+        "multiplier": [1.5, 2.0, 3.0]
+      }
+    ]
+  }
+}

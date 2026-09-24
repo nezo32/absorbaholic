@@ -1,0 +1,42 @@
+{
+  "kind": "entity",
+  "name": "absorbaholic.source.villager",
+  "targets": ["minecraft:villager", "minecraft:wandering_trader"],
+  "icon": "minecraft:villager_spawn_egg",
+  "color": "#BD8B72",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "home_cooking",
+    "behaviors": [
+      {
+        "type": "absorbaholic:food_modifier",
+        "items": [
+          "minecraft:bread",
+          "minecraft:carrot",
+          "minecraft:potato",
+          "minecraft:baked_potato",
+          "minecraft:beetroot",
+          "minecraft:beetroot_soup",
+          "minecraft:apple",
+          "minecraft:pumpkin_pie",
+          "minecraft:melon_slice",
+          "minecraft:cookie",
+          "minecraft:golden_carrot"
+        ],
+        "nutrition": [1.25, 1.5, 2.0],
+        "saturation": [1.25, 1.5, 2.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "zombie_bait",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "attacker": ["#minecraft:zombies"],
+        "multiplier": [1.25, 1.5, 2.0]
+      }
+    ]
+  }
+}

@@ -10,10 +10,13 @@ import org.spongepowered.asm.mixin.Unique;
  * {@link MovementFlagsHolder} duck now (skeleton); WP-ENGINE adds the injections:
  * <ul>
  * <li>{@code causeFoodExhaustion(F)V} HEAD {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyExhaustion};</li>
- * <li>{@code canGlide()Z} {@code @ModifyReturnValue} → true when {@code MovementFlags.GLIDE} (both sides);</li>
  * <li>{@code causeFallDamage(DFLnet/minecraft/world/damagesource/DamageSource;)Z} HEAD → {@code TraitEngine.onLand}
  *     for a ServerPlayer.</li>
+ * <li>{@code giveExperiencePoints(I)V} HEAD {@code @ModifyVariable(argsOnly)}, positive amounts →
+ *     {@code TraitEngine.modifyExperience}.</li>
  * </ul>
+ * Gliding is NOT a mixin: {@code EntityElytraEvents.CUSTOM} (registered by TraitEngine in common init, both sides)
+ * returns true for {@code MovementFlags.GLIDE}; a canGlide mixin would crash vanilla's elytra-damage branch.
  */
 @Mixin(Player.class)
 public abstract class PlayerMixin implements MovementFlagsHolder {

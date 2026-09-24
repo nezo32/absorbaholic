@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:axolotl"],
+  "color": "#F3A6D2",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "play_dead",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_over_time",
+        "condition": "low_health",
+        "amount": [1.0, 1.5, 2.0],
+        "interval": 40
+      }
+    ]
+  },
+  "weakness": {
+    "key": "dries_out",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": ["dry", "in_sunlight"],
+        "damage": [0.25, 0.5, 0.75]
+      }
+    ]
+  }
+}

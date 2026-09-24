@@ -1,0 +1,28 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.lapis",
+  "targets": ["#minecraft:lapis_ores", "minecraft:lapis_block"],
+  "icon": "minecraft:lapis_ore",
+  "color": "#1F4FB4",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "wisdom",
+    "behaviors": [
+      {
+        "type": "absorbaholic:xp_multiplier",
+        "multiplier": [1.2, 1.4, 1.6]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "mana_allergy",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_types": ["minecraft:magic", "minecraft:indirect_magic"],
+        "multiplier": [1.25, 1.5, 2.0]
+      }
+    ]
+  }
+}

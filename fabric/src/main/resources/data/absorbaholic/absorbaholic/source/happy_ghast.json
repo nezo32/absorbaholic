@@ -1,0 +1,40 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:happy_ghast"],
+  "color": "#F4E7E1",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "cloud_floater",
+    "attributes": [
+      {
+        "attribute": "minecraft:gravity",
+        "operation": "add_multiplied_base",
+        "amount": [-0.2, -0.35, -0.5]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slow_falling",
+        "amplifier": [0, 0, 0],
+        "condition": ["sneaking", "airborne"]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "big_softie",
+    "attributes": [
+      {
+        "attribute": "minecraft:scale",
+        "operation": "add_multiplied_base",
+        "amount": [0.1, 0.15, 0.2]
+      },
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [-0.5, -1.0, -1.5]
+      }
+    ]
+  }
+}

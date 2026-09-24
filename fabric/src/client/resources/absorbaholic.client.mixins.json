@@ -3,6 +3,9 @@
 	"package": "dev.absorbaholic.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
+		"CreateWorldScreenMixin",
+		"GameTabMixin",
+		"MinecraftMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

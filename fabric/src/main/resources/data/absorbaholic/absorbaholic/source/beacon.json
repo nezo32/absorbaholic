@@ -1,0 +1,42 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:beacon"],
+  "color": "#7FF7F2",
+  "tier": "legendary",
+  "max_level": 3,
+  "trait": {
+    "key": "beacon_blessing",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:haste",
+        "amplifier": [1, 1, 2]
+      },
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:speed",
+        "amplifier": [-1, 0, 1]
+      },
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:regeneration",
+        "amplifier": [-1, -1, 0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "skybound",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:mining_fatigue",
+        "amplifier": [0, 1, 2],
+        "condition": "!open_sky"
+      },
+      {
+        "type": "absorbaholic:detection_range",
+        "multiplier": [1.5, 2.0, 2.5]
+      }
+    ]
+  }
+}

@@ -36,6 +36,14 @@ public final class FactorMath {
 		return clamp(product, AbsorbCaps.EXHAUSTION_FACTOR_MIN, AbsorbCaps.EXHAUSTION_FACTOR_MAX);
 	}
 
+	public static float experience(float product) {
+		return clamp(product, AbsorbCaps.EXPERIENCE_FACTOR_MIN, AbsorbCaps.EXPERIENCE_FACTOR_MAX);
+	}
+
+	public static float durability(float product) {
+		return clamp(product, AbsorbCaps.DURABILITY_FACTOR_MIN, AbsorbCaps.DURABILITY_FACTOR_MAX);
+	}
+
 	public static double visibility(double product) {
 		return Math.clamp(Double.isNaN(product) ? 1.0 : product, AbsorbCaps.VISIBILITY_FACTOR_MIN, AbsorbCaps.VISIBILITY_FACTOR_MAX);
 	}

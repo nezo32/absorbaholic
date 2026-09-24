@@ -8,6 +8,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -91,6 +92,19 @@ public final class TraitEngine {
 	}
 
 	public static void onLand(ServerPlayer player, double fallDistance) {}
+
+	/** Player#giveExperiencePoints HEAD (positive amounts only). */
+	public static int modifyExperience(ServerPlayer player, int amount) {
+		return amount;
+	}
+
+	/** ItemStack durability damage caused while the player holds / wears it. */
+	public static int modifyDurabilityDamage(ServerPlayer player, ItemStack stack, int amount) {
+		return amount;
+	}
+
+	/** After the player finished using a consumable item ({@code stack} = copy before consumption). */
+	public static void onItemConsumed(ServerPlayer player, ItemStack stack) {}
 
 	/** Dragon egg: true if any active entry wipes all traits on death. Uses the cached set (call before discard). */
 	public static boolean wipesOnDeath(ServerPlayer player) {

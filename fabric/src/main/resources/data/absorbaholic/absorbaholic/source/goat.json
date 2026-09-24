@@ -1,0 +1,32 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:goat"],
+  "color": "#A59585",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "mountain_climber",
+    "attributes": [
+      {
+        "attribute": "minecraft:step_height",
+        "operation": "add_value",
+        "amount": [0.2, 0.4, 0.5]
+      },
+      {
+        "attribute": "minecraft:safe_fall_distance",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "clumsy_hooves",
+    "attributes": [
+      {
+        "attribute": "minecraft:block_interaction_range",
+        "operation": "add_value",
+        "amount": [-0.5, -1.0, -1.5]
+      }
+    ]
+  }
+}

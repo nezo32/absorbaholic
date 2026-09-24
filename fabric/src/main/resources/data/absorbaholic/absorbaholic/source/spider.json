@@ -1,0 +1,33 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:spider"],
+  "color": "#342D27",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "wall_crawler",
+    "behaviors": [
+      {
+        "type": "absorbaholic:climb_walls",
+        "speed": [0.12, 0.16, 0.2]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "venom_weak",
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:poison"],
+        "mode": "duration",
+        "value": [1.5, 2.0, 2.5]
+      },
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:poison"],
+        "mode": "amplifier",
+        "value": [0, 0, 1]
+      }
+    ]
+  }
+}

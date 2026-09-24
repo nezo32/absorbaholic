@@ -6,8 +6,17 @@
 	"environment": "*",
 	"entrypoints": {
 		"fabric-gametest": [
+			"dev.absorbaholic.test.AbsorbRegistryGameTests",
+			"dev.absorbaholic.test.AbsorbInteractionGameTests",
+			"dev.absorbaholic.test.AbsorbPersistenceGameTests",
+			"dev.absorbaholic.test.AbsorbCommandGameTests",
+			"dev.absorbaholic.test.TraitEngineGameTests",
+			"dev.absorbaholic.test.BehaviorAGameTests",
+			"dev.absorbaholic.test.BehaviorBGameTests",
+			"dev.absorbaholic.test.BehaviorCGameTests"
 		],
 		"fabric-client-gametest": [
+			"dev.absorbaholic.test.AbsorbClientGameTest"
 		]
 	},
 	"depends": {

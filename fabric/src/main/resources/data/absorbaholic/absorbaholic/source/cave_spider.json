@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:cave_spider"],
+  "color": "#0C424E",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "venomous",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "effect": "minecraft:poison",
+        "amplifier": [0, 0, 0],
+        "duration": [60, 100, 140],
+        "chance": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "fragile_frame",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-2, -3, -4]
+      }
+    ]
+  }
+}

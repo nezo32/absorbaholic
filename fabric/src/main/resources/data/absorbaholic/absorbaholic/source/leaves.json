@@ -1,0 +1,30 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.leaves",
+  "targets": ["#minecraft:leaves"],
+  "icon": "minecraft:oak_leaves",
+  "color": "#4A8F28",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "photosynthesis",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_over_time",
+        "condition": "in_sunlight",
+        "amount": [0.5, 0.75, 1.0],
+        "interval": 60
+      }
+    ]
+  },
+  "weakness": {
+    "key": "light_as_a_leaf",
+    "attributes": [
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [-0.2, -0.4, -0.6]
+      }
+    ]
+  }
+}

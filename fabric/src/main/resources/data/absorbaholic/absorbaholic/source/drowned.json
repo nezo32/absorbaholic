@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:drowned"],
+  "color": "#56A08E",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "swift_swimmer",
+    "attributes": [
+      {
+        "attribute": "minecraft:water_movement_efficiency",
+        "operation": "add_value",
+        "amount": [0.33, 0.66, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sunburn",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "in_sunlight",
+        "ignite_seconds": [2, 3, 5],
+        "helmet_blocks": true
+      }
+    ]
+  }
+}

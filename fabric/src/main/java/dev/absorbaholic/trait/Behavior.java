@@ -7,6 +7,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
@@ -129,4 +130,17 @@ public interface Behavior<P> {
 
 	/** The player broke a block. */
 	default void onBlockBreak(ActiveBehavior<P> self, ServerPlayer player, BlockPos pos, BlockState state) {}
+
+	/** The player finished eating / drinking {@code stack} (a copy taken before consumption). */
+	default void onItemConsumed(ActiveBehavior<P> self, ServerPlayer player, ItemStack stack) {}
+
+	/** Factor on experience points the player gains (orbs, commands excluded by the engine). */
+	default float experienceFactor(ActiveBehavior<P> self, ServerPlayer player, int amount) {
+		return 1.0F;
+	}
+
+	/** Factor on durability damage to the player's items. */
+	default float durabilityFactor(ActiveBehavior<P> self, ServerPlayer player, ItemStack stack, int amount) {
+		return 1.0F;
+	}
 }

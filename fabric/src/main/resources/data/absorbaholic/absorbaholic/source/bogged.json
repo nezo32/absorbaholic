@@ -1,0 +1,30 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:bogged"],
+  "color": "#4E6B3A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "toxic_arrows",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "damage_tag": "minecraft:is_projectile",
+        "effect": "minecraft:poison",
+        "amplifier": [0, 0, 0],
+        "duration": [60, 80, 120],
+        "chance": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "swamp_rot",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "all",
+        "multiplier": [0.8, 0.65, 0.5]
+      }
+    ]
+  }
+}

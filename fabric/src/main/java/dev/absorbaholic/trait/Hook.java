@@ -31,7 +31,10 @@ public enum Hook {
 	MODIFY_EFFECT("modifyEffect"),
 	PREVENT_TARGETING("preventsTargeting"),
 	VISIBILITY("visibilityFactor"),
-	BLOCK_BREAK("onBlockBreak");
+	BLOCK_BREAK("onBlockBreak"),
+	ITEM_CONSUMED("onItemConsumed"),
+	EXPERIENCE("experienceFactor"),
+	DURABILITY("durabilityFactor");
 
 	public final String methodName;
 	private final Method method;

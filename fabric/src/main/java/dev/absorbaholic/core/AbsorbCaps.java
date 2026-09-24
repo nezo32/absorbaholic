@@ -71,6 +71,12 @@ public final class AbsorbCaps {
 	/** Combined mob detection (visibility) multiplier range: &gt; 1 = mobs notice the player from further away. */
 	public static final double VISIBILITY_FACTOR_MIN = 0.25;
 	public static final double VISIBILITY_FACTOR_MAX = 3.0;
+	/** Combined experience gain multiplier range. */
+	public static final float EXPERIENCE_FACTOR_MIN = 0.0F;
+	public static final float EXPERIENCE_FACTOR_MAX = 3.0F;
+	/** Combined item durability-loss multiplier range. */
+	public static final float DURABILITY_FACTOR_MIN = 0.0F;
+	public static final float DURABILITY_FACTOR_MAX = 4.0F;
 	/** Max amplifier (0-based) an effect may reach after a weakness amplifies it. */
 	public static final int EFFECT_AMPLIFIER_MAX = 4;
 

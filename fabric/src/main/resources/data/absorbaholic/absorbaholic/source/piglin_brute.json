@@ -1,0 +1,33 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:piglin_brute"],
+  "color": "#6F4B2C",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "brute_force",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      },
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "hot_headed",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:piglin", "minecraft:piglin_brute", "minecraft:zombified_piglin"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

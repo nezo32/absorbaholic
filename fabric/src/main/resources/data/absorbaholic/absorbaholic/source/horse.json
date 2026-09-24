@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "name": "absorbaholic.source.horse",
+  "targets": ["minecraft:horse", "minecraft:donkey", "minecraft:mule"],
+  "icon": "minecraft:horse_spawn_egg",
+  "color": "#8A5A2B",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "gallop",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [0.06, 0.12, 0.18]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "heavy_hooves",
+    "attributes": [
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [0.25, 0.5, 0.75]
+      }
+    ]
+  }
+}

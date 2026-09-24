@@ -1,0 +1,30 @@
+{
+  "kind": "entity",
+  "name": "absorbaholic.source.hoglin",
+  "targets": ["minecraft:hoglin", "minecraft:zoglin"],
+  "icon": "minecraft:hoglin_spawn_egg",
+  "color": "#C6835F",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "tusk_toss",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_knockback",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "piglin_prey",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:piglin", "minecraft:piglin_brute"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

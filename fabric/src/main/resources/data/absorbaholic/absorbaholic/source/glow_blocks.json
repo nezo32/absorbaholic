@@ -1,0 +1,54 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.glow_blocks",
+  "targets": [
+    "minecraft:glowstone",
+    "minecraft:shroomlight",
+    "minecraft:ochre_froglight",
+    "minecraft:verdant_froglight",
+    "minecraft:pearlescent_froglight",
+    "minecraft:torch",
+    "minecraft:wall_torch",
+    "minecraft:soul_torch",
+    "minecraft:soul_wall_torch",
+    "minecraft:lantern",
+    "minecraft:soul_lantern",
+    "minecraft:end_rod",
+    "minecraft:campfire",
+    "minecraft:soul_campfire",
+    "#minecraft:candles",
+    "#minecraft:candle_cakes"
+  ],
+  "icon": "minecraft:glowstone",
+  "color": "#FFD96B",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "glow_aura",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:night_vision",
+        "amplifier": [0, 0, 0]
+      },
+      {
+        "type": "absorbaholic:aura",
+        "targets": "hostile",
+        "radius": [0, 8, 16],
+        "interval": 20,
+        "effect": "minecraft:glowing",
+        "amplifier": [0, 0, 0],
+        "duration": [40, 40, 40]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "walking_lantern",
+    "behaviors": [
+      {
+        "type": "absorbaholic:detection_range",
+        "multiplier": [1.3, 1.6, 2.0]
+      }
+    ]
+  }
+}

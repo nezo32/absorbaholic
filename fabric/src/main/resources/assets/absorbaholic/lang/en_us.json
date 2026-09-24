@@ -1,1 +1,7 @@
-{}
+{
+  "absorbaholic.tier.common": "Common",
+  "absorbaholic.tier.uncommon": "Uncommon",
+  "absorbaholic.tier.rare": "Rare",
+  "absorbaholic.tier.epic": "Epic",
+  "absorbaholic.tier.legendary": "Legendary"
+}

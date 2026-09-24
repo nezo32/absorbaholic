@@ -1,0 +1,45 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.moss",
+  "targets": [
+    "#minecraft:moss_blocks",
+    "minecraft:moss_carpet",
+    "minecraft:pale_moss_carpet",
+    "minecraft:pale_hanging_moss",
+    "minecraft:glow_lichen",
+    "minecraft:hanging_roots",
+    "minecraft:spore_blossom",
+    "minecraft:big_dripleaf",
+    "minecraft:big_dripleaf_stem",
+    "minecraft:small_dripleaf",
+    "minecraft:vine",
+    "minecraft:weeping_vines",
+    "minecraft:weeping_vines_plant",
+    "minecraft:twisting_vines",
+    "minecraft:twisting_vines_plant"
+  ],
+  "icon": "minecraft:moss_block",
+  "color": "#596E2D",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "mossy_steps",
+    "attributes": [
+      {
+        "attribute": "minecraft:sneaking_speed",
+        "operation": "add_value",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "overgrown",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.03, -0.06, -0.09]
+      }
+    ]
+  }
+}

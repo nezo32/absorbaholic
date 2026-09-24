@@ -1,0 +1,25 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:dragon_egg"],
+  "color": "#1B0B26",
+  "tier": "legendary",
+  "max_level": 1,
+  "trait": {
+    "key": "dragon_flight",
+    "behaviors": [
+      {
+        "type": "absorbaholic:flight",
+        "speed": [0.05, 0.05, 0.05],
+        "combat_lock_ticks": [100, 100, 100]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "all_or_nothing",
+    "behaviors": [
+      {
+        "type": "absorbaholic:wipe_on_death"
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:wither"],
+  "color": "#141414",
+  "tier": "legendary",
+  "max_level": 3,
+  "trait": {
+    "key": "withers_wrath",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "effect": "minecraft:wither",
+        "amplifier": [0, 1, 1],
+        "duration": [100, 100, 140],
+        "chance": [1.0, 1.0, 1.0]
+      },
+      {
+        "type": "absorbaholic:kill_reward",
+        "heal": [2, 4, 6]
+      },
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:wither"],
+        "mode": "immune",
+        "value": [1, 1, 1]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "hollow_heart",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-4, -7, -10]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:instant_health"],
+        "mode": "invert",
+        "value": [1, 1, 1]
+      }
+    ]
+  }
+}

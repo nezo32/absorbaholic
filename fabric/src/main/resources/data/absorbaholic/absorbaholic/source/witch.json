@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:witch"],
+  "color": "#340000",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "brew_master",
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "category": "beneficial",
+        "mode": "duration",
+        "value": [1.25, 1.5, 2.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "bad_brew",
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "category": "harmful",
+        "mode": "duration",
+        "value": [1.25, 1.5, 2.0]
+      }
+    ]
+  }
+}

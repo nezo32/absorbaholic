@@ -1,0 +1,32 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:bat"],
+  "color": "#4C3E30",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "echolocation",
+    "behaviors": [
+      {
+        "type": "absorbaholic:aura",
+        "targets": "all_mobs",
+        "radius": [6, 10, 14],
+        "interval": 20,
+        "effect": "minecraft:glowing",
+        "amplifier": [0, 0, 0],
+        "duration": [30, 30, 30],
+        "condition": "in_darkness"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "flimsy",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-1, -2, -3]
+      }
+    ]
+  }
+}

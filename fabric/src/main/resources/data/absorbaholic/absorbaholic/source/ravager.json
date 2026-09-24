@@ -1,0 +1,42 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:ravager"],
+  "color": "#5B5250",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "stampede",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      },
+      {
+        "attribute": "minecraft:attack_knockback",
+        "operation": "add_value",
+        "amount": [1.0, 1.5, 2.0]
+      },
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.2, 0.4, 0.6]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "lumbering_beast",
+    "attributes": [
+      {
+        "attribute": "minecraft:scale",
+        "operation": "add_multiplied_base",
+        "amount": [0.1, 0.15, 0.2]
+      },
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.05, -0.1, -0.15]
+      }
+    ]
+  }
+}

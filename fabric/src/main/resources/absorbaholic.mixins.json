@@ -3,6 +3,14 @@
 	"package": "dev.absorbaholic.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"mixins": [
+		"ConsumableMixin",
+		"ItemStackMixin",
+		"LevelStorageAccessMixin",
+		"LivingEntityMixin",
+		"MinecraftServerAccessor",
+		"MobAccessor",
+		"MobMixin",
+		"PlayerMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -1,0 +1,34 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:obsidian"],
+  "color": "#3B2754",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "blast_proof",
+    "attributes": [
+      {
+        "attribute": "minecraft:explosion_knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.3, 0.6, 1.0]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_explosion",
+        "multiplier": [0.6, 0.4, 0.25]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "dense",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.1, -0.2, -0.3]
+      }
+    ]
+  }
+}

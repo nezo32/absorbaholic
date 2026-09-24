@@ -1,0 +1,26 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:camel"],
+  "color": "#E3B062",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "desert_endurance",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "multiplier": [0.8, 0.65, 0.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "humpback",
+    "attributes": [
+      {
+        "attribute": "minecraft:scale",
+        "operation": "add_multiplied_base",
+        "amount": [0.05, 0.1, 0.15]
+      }
+    ]
+  }
+}

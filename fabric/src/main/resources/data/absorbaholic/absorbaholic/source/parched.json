@@ -1,0 +1,30 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:parched"],
+  "color": "#C9A866",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "parching_shot",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "damage_tag": "minecraft:is_projectile",
+        "effect": "minecraft:weakness",
+        "amplifier": [0, 0, 1],
+        "duration": [60, 100, 140],
+        "chance": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "eternal_thirst",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "condition": "dry",
+        "multiplier": [1.2, 1.4, 1.6]
+      }
+    ]
+  }
+}

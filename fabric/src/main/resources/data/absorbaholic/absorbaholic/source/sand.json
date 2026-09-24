@@ -1,0 +1,51 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.sand",
+  "targets": [
+    "#minecraft:sand",
+    "minecraft:chiseled_red_sandstone",
+    "minecraft:chiseled_sandstone",
+    "minecraft:cut_red_sandstone",
+    "minecraft:cut_red_sandstone_slab",
+    "minecraft:cut_sandstone",
+    "minecraft:cut_sandstone_slab",
+    "minecraft:red_sandstone",
+    "minecraft:red_sandstone_slab",
+    "minecraft:red_sandstone_stairs",
+    "minecraft:red_sandstone_wall",
+    "minecraft:sandstone",
+    "minecraft:sandstone_slab",
+    "minecraft:sandstone_stairs",
+    "minecraft:sandstone_wall",
+    "minecraft:smooth_red_sandstone",
+    "minecraft:smooth_red_sandstone_slab",
+    "minecraft:smooth_red_sandstone_stairs",
+    "minecraft:smooth_sandstone",
+    "minecraft:smooth_sandstone_slab",
+    "minecraft:smooth_sandstone_stairs"
+  ],
+  "icon": "minecraft:sand",
+  "color": "#DBCF8E",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "dune_walker",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_efficiency",
+        "operation": "add_value",
+        "amount": [0.25, 0.5, 0.75]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sand_in_boots",
+    "attributes": [
+      {
+        "attribute": "minecraft:jump_strength",
+        "operation": "add_multiplied_base",
+        "amount": [-0.05, -0.1, -0.15]
+      }
+    ]
+  }
+}

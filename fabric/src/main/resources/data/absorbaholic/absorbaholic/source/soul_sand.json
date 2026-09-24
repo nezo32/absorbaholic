@@ -1,0 +1,38 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.soul_sand",
+  "targets": ["#minecraft:soul_speed_blocks"],
+  "icon": "minecraft:soul_sand",
+  "color": "#51402F",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "soul_speed",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_efficiency",
+        "operation": "add_value",
+        "amount": [0.3, 0.6, 1.0]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:speed",
+        "amplifier": [0, 1, 2],
+        "condition": "on_block",
+        "condition_blocks": "#minecraft:soul_speed_blocks"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "soul_drag",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.04, -0.08, -0.12]
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:fox"],
+  "color": "#E37E2F",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "night_stalker",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:night_vision",
+        "amplifier": [0, 0, 0],
+        "condition": "night"
+      },
+      {
+        "type": "absorbaholic:detection_range",
+        "condition": "night",
+        "multiplier": [0.9, 0.8, 0.7]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "drowsy_by_day",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "natural",
+        "condition": "day",
+        "multiplier": [0.8, 0.6, 0.4]
+      }
+    ]
+  }
+}

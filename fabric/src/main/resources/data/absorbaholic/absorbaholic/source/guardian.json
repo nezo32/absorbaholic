@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:guardian"],
+  "color": "#5A8272",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "spiked_hide",
+    "behaviors": [
+      {
+        "type": "absorbaholic:retaliate",
+        "damage": [1, 2, 3],
+        "chance": [0.3, 0.5, 0.7]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "flop",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fall",
+        "multiplier": [1.5, 2.0, 2.5]
+      }
+    ]
+  }
+}

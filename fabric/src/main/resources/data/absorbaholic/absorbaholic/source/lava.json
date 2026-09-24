@@ -1,0 +1,28 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:lava"],
+  "icon": "minecraft:lava_bucket",
+  "color": "#E8601C",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "magma_blood",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [0.5, 0.25, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "hydrophobic",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "wet",
+        "damage": [1.0, 1.5, 2.0]
+      }
+    ]
+  }
+}

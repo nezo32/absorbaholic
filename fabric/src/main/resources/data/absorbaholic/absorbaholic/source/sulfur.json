@@ -1,0 +1,63 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.sulfur",
+  "targets": [
+    "minecraft:chiseled_sulfur",
+    "minecraft:polished_sulfur",
+    "minecraft:polished_sulfur_slab",
+    "minecraft:polished_sulfur_stairs",
+    "minecraft:polished_sulfur_wall",
+    "minecraft:potent_sulfur",
+    "minecraft:sulfur",
+    "minecraft:sulfur_brick_slab",
+    "minecraft:sulfur_brick_stairs",
+    "minecraft:sulfur_brick_wall",
+    "minecraft:sulfur_bricks",
+    "minecraft:sulfur_slab",
+    "minecraft:sulfur_spike",
+    "minecraft:sulfur_stairs",
+    "minecraft:sulfur_wall"
+  ],
+  "icon": "minecraft:sulfur",
+  "color": "#D7C84A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "noxious_fumes",
+    "behaviors": [
+      {
+        "type": "absorbaholic:aura",
+        "targets": "hostile",
+        "radius": [2, 3, 4],
+        "interval": 40,
+        "effect": "minecraft:weakness",
+        "amplifier": [0, 0, 0],
+        "duration": [60, 60, 60]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "rotten_egg_stench",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": [
+          "minecraft:cow",
+          "minecraft:pig",
+          "minecraft:sheep",
+          "minecraft:chicken",
+          "minecraft:rabbit",
+          "minecraft:goat",
+          "minecraft:horse",
+          "minecraft:donkey",
+          "minecraft:mule",
+          "minecraft:llama",
+          "minecraft:camel",
+          "minecraft:mooshroom"
+        ],
+        "attitude": "flee",
+        "radius": [8, 12, 16]
+      }
+    ]
+  }
+}

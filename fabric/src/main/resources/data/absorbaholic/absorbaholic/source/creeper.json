@@ -1,0 +1,36 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:creeper"],
+  "color": "#0DA70B",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "controlled_blast",
+    "behaviors": [
+      {
+        "type": "absorbaholic:sneak_detonate",
+        "power": [2.0, 2.5, 3.0],
+        "fuse": 30,
+        "cooldown": [600, 500, 400]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_explosion",
+        "multiplier": [0.8, 0.65, 0.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "cat_phobia",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "near_entity",
+        "condition_entities": ["minecraft:cat", "minecraft:ocelot"],
+        "condition_radius": 10
+      }
+    ]
+  }
+}

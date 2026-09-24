@@ -1,0 +1,39 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:magma_block"],
+  "color": "#8E3A15",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "hot_touch",
+    "behaviors": [
+      {
+        "type": "absorbaholic:aura",
+        "targets": "hostile",
+        "radius": [1.0, 1.5, 2.0],
+        "interval": 20,
+        "ignite_seconds": [2, 3, 4]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_types": ["minecraft:hot_floor"],
+        "multiplier": [0.0, 0.0, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "snow_allergy",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "cold",
+        "damage": [0.5, 1.0, 1.5]
+      },
+      {
+        "type": "absorbaholic:struck_by",
+        "entities": ["minecraft:snowball"],
+        "damage": [1, 2, 3]
+      }
+    ]
+  }
+}

@@ -1,1 +1,7 @@
-{}
+{
+  "absorbaholic.tier.common": "Обычный",
+  "absorbaholic.tier.uncommon": "Необычный",
+  "absorbaholic.tier.rare": "Редкий",
+  "absorbaholic.tier.epic": "Эпический",
+  "absorbaholic.tier.legendary": "Легендарный"
+}

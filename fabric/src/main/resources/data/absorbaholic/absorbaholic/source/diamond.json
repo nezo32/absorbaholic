@@ -1,0 +1,34 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.diamond",
+  "targets": ["#minecraft:diamond_ores", "minecraft:diamond_block"],
+  "icon": "minecraft:diamond_ore",
+  "color": "#4AEDD9",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "diamond_skin",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor",
+        "operation": "add_value",
+        "amount": [3, 5, 7]
+      },
+      {
+        "attribute": "minecraft:armor_toughness",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "brittle_brilliance",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_explosion",
+        "multiplier": [1.5, 2.0, 2.5]
+      }
+    ]
+  }
+}

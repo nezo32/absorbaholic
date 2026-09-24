@@ -1,0 +1,30 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:crying_obsidian"],
+  "color": "#5B1DA8",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "last_stand",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "condition": "low_health",
+        "multiplier": [0.8, 0.65, 0.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "teary_eyes",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:blindness",
+        "amplifier": [0, 0, 0],
+        "condition": "low_health",
+        "interval": [120, 100, 80],
+        "duration": [40, 50, 60]
+      }
+    ]
+  }
+}

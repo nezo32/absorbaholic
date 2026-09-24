@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:nautilus"],
+  "color": "#D9C7A8",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "nautilus_breath",
+    "attributes": [
+      {
+        "attribute": "minecraft:water_movement_efficiency",
+        "operation": "add_value",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:breath_of_the_nautilus",
+        "amplifier": [0, 0, 0],
+        "condition": "underwater"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "drowned_prey",
+    "behaviors": [
+      {
+        "type": "absorbaholic:detection_range",
+        "entities": ["minecraft:drowned"],
+        "multiplier": [1.5, 2.0, 3.0]
+      }
+    ]
+  }
+}

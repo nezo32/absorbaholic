@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:rabbit"],
+  "color": "#995F40",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "lucky_foot",
+    "attributes": [
+      {
+        "attribute": "minecraft:luck",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "prey_animal",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:wolf", "minecraft:fox"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "kind": "entity",
+  "name": "absorbaholic.source.illager",
+  "targets": ["minecraft:pillager", "minecraft:vindicator"],
+  "icon": "minecraft:vindicator_spawn_egg",
+  "color": "#5B6060",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "raiders_edge",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_dealt_multiplier",
+        "damage_tag": "minecraft:is_projectile",
+        "multiplier": [1.1, 1.2, 1.3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "golems_grudge",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:iron_golem"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.pumpkin",
+  "targets": [
+    "minecraft:pumpkin",
+    "minecraft:carved_pumpkin",
+    "minecraft:jack_o_lantern",
+    "minecraft:pumpkin_stem",
+    "minecraft:attached_pumpkin_stem"
+  ],
+  "icon": "minecraft:carved_pumpkin",
+  "color": "#E38A1D",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "pumpkin_head",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:enderman"],
+        "attitude": "ignore"
+      },
+      {
+        "type": "absorbaholic:detection_range",
+        "multiplier": [0.9, 0.8, 0.7]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "tunnel_vision",
+    "attributes": [
+      {
+        "attribute": "minecraft:entity_interaction_range",
+        "operation": "add_value",
+        "amount": [-0.2, -0.4, -0.6]
+      }
+    ]
+  }
+}

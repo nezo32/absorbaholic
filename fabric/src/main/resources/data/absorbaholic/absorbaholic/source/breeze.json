@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:breeze"],
+  "color": "#B0BCEE",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "wind_burst",
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "wind_charge",
+        "count": [1, 1, 1],
+        "cooldown": [60, 40, 30]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "gust_blown",
+    "attributes": [
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [-0.3, -0.6, -0.9]
+      }
+    ]
+  }
+}

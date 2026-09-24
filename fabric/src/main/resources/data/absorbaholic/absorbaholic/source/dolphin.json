@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:dolphin"],
+  "color": "#8BA5C0",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "dolphins_grace",
+    "attributes": [
+      {
+        "attribute": "minecraft:oxygen_bonus",
+        "operation": "add_value",
+        "amount": [1, 2, 4]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:dolphins_grace",
+        "amplifier": [0, 0, 0],
+        "condition": "in_water"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "air_breather",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_drowning",
+        "multiplier": [1.5, 2.0, 3.0]
+      }
+    ]
+  }
+}

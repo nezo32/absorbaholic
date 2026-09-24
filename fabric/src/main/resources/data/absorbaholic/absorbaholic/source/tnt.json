@@ -1,0 +1,27 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:tnt"],
+  "color": "#DB441A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "kaboom_punch",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_knockback",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "volatile",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [1.5, 2.0, 2.5]
+      }
+    ]
+  }
+}

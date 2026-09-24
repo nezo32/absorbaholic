@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:chicken"],
+  "color": "#F2F2F2",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "feather_fall",
+    "attributes": [
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [-0.4, -0.7, -1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "fox_bait",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:fox", "minecraft:ocelot"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

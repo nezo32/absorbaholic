@@ -1,0 +1,43 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.cinnabar",
+  "targets": [
+    "minecraft:chiseled_cinnabar",
+    "minecraft:cinnabar",
+    "minecraft:cinnabar_brick_slab",
+    "minecraft:cinnabar_brick_stairs",
+    "minecraft:cinnabar_brick_wall",
+    "minecraft:cinnabar_bricks",
+    "minecraft:cinnabar_slab",
+    "minecraft:cinnabar_stairs",
+    "minecraft:cinnabar_wall",
+    "minecraft:polished_cinnabar",
+    "minecraft:polished_cinnabar_slab",
+    "minecraft:polished_cinnabar_stairs",
+    "minecraft:polished_cinnabar_wall"
+  ],
+  "icon": "minecraft:cinnabar",
+  "color": "#B0342C",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "quicksilver",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_speed",
+        "operation": "add_multiplied_total",
+        "amount": [0.1, 0.15, 0.2]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "mercury_poisoning",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "all",
+        "multiplier": [0.85, 0.7, 0.55]
+      }
+    ]
+  }
+}

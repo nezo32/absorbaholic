@@ -8,6 +8,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 
@@ -96,4 +97,10 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 	public double visibilityFactor(ServerPlayer p, @Nullable Entity looker) { return b().visibilityFactor(this, p, looker); }
 
 	public void onBlockBreak(ServerPlayer p, BlockPos pos, BlockState state) { b().onBlockBreak(this, p, pos, state); }
+
+	public void onItemConsumed(ServerPlayer p, ItemStack stack) { b().onItemConsumed(this, p, stack); }
+
+	public float experienceFactor(ServerPlayer p, int amount) { return b().experienceFactor(this, p, amount); }
+
+	public float durabilityFactor(ServerPlayer p, ItemStack stack, int amount) { return b().durabilityFactor(this, p, stack, amount); }
 }

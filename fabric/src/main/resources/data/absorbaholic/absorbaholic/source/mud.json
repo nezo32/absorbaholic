@@ -1,0 +1,37 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.mud",
+  "targets": [
+    "minecraft:clay",
+    "#minecraft:mud",
+    "minecraft:packed_mud",
+    "minecraft:mud_bricks",
+    "minecraft:mud_brick_slab",
+    "minecraft:mud_brick_stairs",
+    "minecraft:mud_brick_wall"
+  ],
+  "icon": "minecraft:mud",
+  "color": "#3C3940",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "mud_mask",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [0.85, 0.7, 0.55]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "slippery",
+    "attributes": [
+      {
+        "attribute": "minecraft:friction_modifier",
+        "operation": "add_multiplied_base",
+        "amount": [-0.2, -0.35, -0.5]
+      }
+    ]
+  }
+}

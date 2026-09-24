@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:copper_golem"],
+  "color": "#C15A36",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "sticky_fingers",
+    "behaviors": [
+      {
+        "type": "absorbaholic:item_magnet",
+        "radius": [2, 3, 4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "oxidizing",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "wet"
+      }
+    ]
+  }
+}

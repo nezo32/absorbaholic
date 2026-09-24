@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:husk"],
+  "color": "#7A6A4F",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "hunger_touch",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "effect": "minecraft:hunger",
+        "amplifier": [0, 0, 1],
+        "duration": [100, 160, 220],
+        "chance": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "crumbling",
+    "attributes": [
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [-0.15, -0.3, -0.45]
+      }
+    ]
+  }
+}

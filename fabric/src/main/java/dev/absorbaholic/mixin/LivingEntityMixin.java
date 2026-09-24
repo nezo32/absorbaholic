@@ -12,11 +12,13 @@ import org.spongepowered.asm.mixin.Mixin;
  * <li>{@code heal(F)V} HEAD {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyHeal}.</li>
  * <li>{@code addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z} HEAD
  *     {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyEffect} (deny is ServerMobEffectEvents.ALLOW_ADD).</li>
- * <li>{@code canStandOnFluid(Lnet/minecraft/world/level/material/FluidState;)Z} {@code @ModifyReturnValue} →
- *     WALK_ON_WATER / WALK_ON_LAVA flags (not while sneaking). Both sides.</li>
- * <li>{@code onClimbable()Z} {@code @ModifyReturnValue} → CLIMB_WALLS flag and {@code horizontalCollision}. Both sides.</li>
- * <li>{@code getVisibilityPercent} (name only: 26.2 has (Entity), 26.3 has (ServerLevel, Entity))
- *     {@code @ModifyReturnValue} with {@code @Local(argsOnly = true) Entity} → {@code TraitEngine.visibilityFactor}.</li>
+ * <li>{@code canStandOnFluid(Lnet/minecraft/world/level/material/FluidState;)Z} HEAD cancellable →
+ *     WALK_ON_WATER / WALK_ON_LAVA flags (not while sneaking). Both sides (client physics).</li>
+ * <li>{@code onClimbable()Z} HEAD cancellable → true for a Player with CLIMB_WALLS and {@code horizontalCollision}.
+ *     Both sides.</li>
+ * <li>{@code getVisibilityPercent} by NAME ONLY (26.2: (Entity), 26.3: (ServerLevel, Entity)), {@code @At("RETURN")},
+ *     handler takes only {@code CallbackInfoReturnable<Double>} (or MixinExtras {@code @Local(argsOnly = true) Entity})
+ *     → {@code TraitEngine.visibilityFactor}. Note: &gt; 1 cannot extend detection past the mob's follow range.</li>
  * </ul>
  */
 @Mixin(LivingEntity.class)

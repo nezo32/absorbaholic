@@ -1,0 +1,34 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.chorus",
+  "targets": ["minecraft:chorus_plant", "minecraft:chorus_flower"],
+  "icon": "minecraft:chorus_flower",
+  "color": "#8E6A8E",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "chorus_hop",
+    "behaviors": [
+      {
+        "type": "absorbaholic:teleport",
+        "trigger": "sneak_jump",
+        "mode": "random",
+        "range": [8, 12, 16],
+        "cooldown": [200, 160, 120]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "unstable_matter",
+    "behaviors": [
+      {
+        "type": "absorbaholic:teleport",
+        "trigger": "on_hurt",
+        "mode": "random",
+        "range": [4, 6, 8],
+        "chance": [0.1, 0.2, 0.3],
+        "cooldown": [60, 60, 60]
+      }
+    ]
+  }
+}

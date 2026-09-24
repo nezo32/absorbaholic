@@ -1,0 +1,36 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.snow",
+  "targets": ["#minecraft:snow"],
+  "icon": "minecraft:snow_block",
+  "color": "#F0FBFB",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "frostproof",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_freezing",
+        "multiplier": [0.5, 0.25, 0.0]
+      },
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:speed",
+        "amplifier": [0, 0, 1],
+        "condition": "on_block",
+        "condition_blocks": "#minecraft:snow"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "melting",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "damage": [0.25, 0.5, 0.75],
+        "condition": "hot"
+      }
+    ]
+  }
+}

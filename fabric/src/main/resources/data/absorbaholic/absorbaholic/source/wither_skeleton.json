@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:wither_skeleton"],
+  "color": "#2A2A2A",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "withering_blade",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "effect": "minecraft:wither",
+        "amplifier": [0, 0, 0],
+        "duration": [60, 100, 140],
+        "chance": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "brittle_bones",
+    "attributes": [
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [0.3, 0.6, 1.0]
+      }
+    ]
+  }
+}

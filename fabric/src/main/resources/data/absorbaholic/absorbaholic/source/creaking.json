@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:creaking"],
+  "color": "#5F5A56",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "resin_heart",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_over_time",
+        "condition": "night",
+        "amount": [0.5, 1.0, 1.5],
+        "interval": 40
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sun_stiff",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "in_sunlight"
+      }
+    ]
+  }
+}
