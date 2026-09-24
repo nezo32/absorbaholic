@@ -45,6 +45,8 @@
 	"absorbaholic.command.traits.tag.pure": "[pure]",
 	"absorbaholic.command.value.off": "OFF",
 	"absorbaholic.command.value.on": "ON",
+	"absorbaholic.createWorld.toggle": "Absorbaholic Mode",
+	"absorbaholic.createWorld.toggle.tooltip": "Sneak with an empty hand and hold Use on a block, a fluid or a badly hurt mob to absorb it: you gain its trait, and its weakness too. Saved with this world. Operators can change it later with /absorbaholic on|off.",
 	"absorbaholic.message.evicted": "No trait slots left: %s faded away to make room.",
 	"absorbaholic.message.lost": "☠ Your absorbed traits died with you (keep-on-death is off).",
 	"absorbaholic.message.wiped": "☠ A deathly curse wiped out all your absorbed traits!",

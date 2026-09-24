@@ -45,6 +45,8 @@
 	"absorbaholic.command.traits.tag.pure": "[чистая]",
 	"absorbaholic.command.value.off": "ВЫКЛ",
 	"absorbaholic.command.value.on": "ВКЛ",
+	"absorbaholic.createWorld.toggle": "Режим Absorbaholic",
+	"absorbaholic.createWorld.toggle.tooltip": "Присядьте с пустой рукой и удерживайте «Использовать» на блоке, жидкости или сильно раненом мобе, чтобы поглотить его: вы получите его черту, а в придачу и слабость. Сохраняется вместе с миром. Позже операторы могут изменить это командой /absorbaholic on|off.",
 	"absorbaholic.message.evicted": "Места для черт кончились: %s растворяется, уступая место.",
 	"absorbaholic.message.lost": "☠ Поглощённые черты сгинули вместе с тобой (сохранение после смерти выключено).",
 	"absorbaholic.message.wiped": "☠ Смертельное проклятие стёрло все твои поглощённые черты!",
