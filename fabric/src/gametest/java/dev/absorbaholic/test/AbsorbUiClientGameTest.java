@@ -16,6 +16,7 @@ import dev.absorbaholic.client.screen.TraitsScreen;
 import dev.absorbaholic.core.NotifySettings;
 import dev.absorbaholic.core.SourceKind;
 import dev.absorbaholic.core.Tier;
+import dev.absorbaholic.net.AuraPayload;
 import dev.absorbaholic.net.ChannelStatePayload;
 import dev.absorbaholic.net.TraitsPayload;
 import dev.absorbaholic.net.WorldStatePayload;
@@ -26,6 +27,7 @@ import dev.absorbaholic.registry.SourceTargets;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.screens.TitleScreen;
@@ -77,6 +79,7 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 				injectState(ctx);
 
 				hud(ctx, sp, "en");
+				aura(ctx);
 				traitsScreen(ctx, "en");
 				settingsInWorld(ctx, "en");
 
@@ -307,9 +310,27 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 		}
 	}
 
+	// ---- aura ----
+
+	/** Third person with a strong red-ish aura on the local player: screenshot for the visual review. */
+	private static void aura(ClientGameTestContext ctx) {
+		ctx.runOnClient(mc -> {
+			ClientState.setAura(new AuraPayload(mc.player.getId(), 0xD04040, 1.0F));
+			mc.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+		});
+		ctx.waitTicks(40);
+		ctx.takeScreenshot("ui_aura_third_person");
+		ctx.runOnClient(mc -> {
+			ClientState.setAura(new AuraPayload(mc.player.getId(), 0, 0.0F));
+			mc.options.setCameraType(CameraType.FIRST_PERSON);
+		});
+		if (ctx.computeOnClient(mc -> ClientState.aura(mc.player.getId())) != null) throw new AssertionError("aura not cleared");
+	}
+
 	// ---- traits screen ----
 
 	private static void traitsScreen(ClientGameTestContext ctx, String lang) {
+		ctx.getInput().setCursorPos(0, 0);
 		ctx.getInput().pressKey(o -> TraitsKeybind.key());
 		ctx.waitForScreen(TraitsScreen.class);
 		int rows = ctx.computeOnClient(mc -> ((TraitsScreen) mc.gui.screen()).rowCount());

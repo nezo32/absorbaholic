@@ -117,7 +117,8 @@ public final class AbsorbHud {
 
 		HitResult hit = mc.hitResult;
 		if (hit instanceof EntityHitResult entityHit && hit.getType() == HitResult.Type.ENTITY) {
-			return entityHint(player, entityHit.getEntity());
+			Entity entity = entityHit.getEntity();
+			return entity.isAlive() ? entityHint(player, entity) : null;
 		}
 		HitResult pick = player.pick(player.blockInteractionRange(), 1.0F, true);
 		if (pick instanceof BlockHitResult blockHit && pick.getType() == HitResult.Type.BLOCK) {

@@ -56,7 +56,7 @@ public final class AuraParticles {
 	private static void spawn(ClientLevel level, AbstractClientPlayer player, AuraPayload aura, boolean feetOnly, RandomSource random) {
 		float strength = Math.clamp(aura.strength(), 0.0F, 1.0F);
 		int count = feetOnly ? 1 : 1 + Math.round(strength * 2);
-		float scale = 0.55F + 0.35F * strength;
+		float scale = 0.7F + 0.4F * strength;
 		for (int i = 0; i < count; i++) {
 			int color = ColorMix.mix(new int[] {aura.color() & 0xFFFFFF, 0xFFFFFF}, new double[] {1.0, random.nextDouble() * SHIMMER});
 			double y = feetOnly ? player.getY() + random.nextDouble() * 0.4 : player.getRandomY();

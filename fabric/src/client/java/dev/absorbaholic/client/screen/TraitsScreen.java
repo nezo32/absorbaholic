@@ -201,13 +201,13 @@ public class TraitsScreen extends Screen {
 	private static @Nullable Object iconsFor;
 
 	/**
-	 * Display name of a source: {@code absorbaholic.source.<path>} (or {@code <namespace>.source.<path>}) when the
-	 * language has it, else the name of its first direct target, else the raw id.
+	 * Display name of a source: its {@code nameKey} (vanilla name for single-target sources, else
+	 * {@code absorbaholic.source.<path>}) when the language has it, else the name of its first direct target, else the
+	 * raw id.
 	 */
 	public static Component sourceName(SourceSummary source) {
 		Identifier id = source.id();
-		String key = id.getNamespace() + ".source." + id.getPath();
-		if (Language.getInstance().has(key)) return Component.translatable(key);
+		if (Language.getInstance().has(source.nameKey())) return Component.translatable(source.nameKey());
 		SourceTargets targets = source.targets();
 		for (Identifier target : targets.ids()) {
 			if (targets.kind() == SourceKind.BLOCK) {
