@@ -1,0 +1,16 @@
+{
+	"schemaVersion": 1,
+	"id": "absorbaholic-gametest",
+	"version": "1.0.0",
+	"name": "Absorbaholic GameTests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+		],
+		"fabric-client-gametest": [
+		]
+	},
+	"depends": {
+		"absorbaholic": "*"
+	}
+}
