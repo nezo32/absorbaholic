@@ -613,5 +613,8 @@
 	"absorbaholic.weakness.zombie_bait": "Zombie Bait",
 	"absorbaholic.weakness.zombie_bait.desc": "Zombies deal more damage to you.",
 	"absorbaholic.weakness.zombifying": "Zombifying",
-	"absorbaholic.weakness.zombifying.desc": "Outside the Nether, healing works worse."
+	"absorbaholic.weakness.zombifying.desc": "Outside the Nether, healing works worse.",
+	"death.attack.absorbaholic.weakness": "%1$s succumbed to an absorbed weakness",
+	"death.attack.absorbaholic.weakness.item": "%1$s succumbed to an absorbed weakness, thanks to %2$s using %3$s",
+	"death.attack.absorbaholic.weakness.player": "%1$s succumbed to an absorbed weakness while fighting %2$s"
 }

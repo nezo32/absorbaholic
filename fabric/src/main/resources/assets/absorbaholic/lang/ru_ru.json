@@ -613,5 +613,8 @@
 	"absorbaholic.weakness.zombie_bait": "Приманка для зомби",
 	"absorbaholic.weakness.zombie_bait.desc": "Зомби наносят вам больше урона.",
 	"absorbaholic.weakness.zombifying": "Зомбификация",
-	"absorbaholic.weakness.zombifying.desc": "Вне Незера лечение действует хуже."
+	"absorbaholic.weakness.zombifying.desc": "Вне Незера лечение действует хуже.",
+	"death.attack.absorbaholic.weakness": "%1$s пал жертвой поглощённой слабости",
+	"death.attack.absorbaholic.weakness.item": "%1$s пал жертвой поглощённой слабости: постарался %2$s, орудуя %3$s",
+	"death.attack.absorbaholic.weakness.player": "%1$s пал жертвой поглощённой слабости в схватке с %2$s"
 }
