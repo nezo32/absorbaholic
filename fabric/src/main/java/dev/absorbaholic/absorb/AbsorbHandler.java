@@ -83,7 +83,7 @@ public final class AbsorbHandler {
 		long validatedAt = Long.MIN_VALUE;
 	}
 
-	/** A validated target: its source, the display name of what is consumed, and the living entity (entities only). */
+	/** A validated target: its source, the source's display name, and the living entity (entities only). */
 	public record Resolved(AbsorbTarget target, SourceDefinition source, Component name, @Nullable LivingEntity entity) {
 		/** The centre of the target, where the channel particles start. */
 		public Vec3 center() {
@@ -304,7 +304,7 @@ public final class AbsorbHandler {
 		if (!seesBlock(player, pos, fluid)) return Check.SILENT;
 		if (AbsorbRules.isProtected(level, pos, state)) return Check.refuse(AbsorbFeedback.REFUSE_PROTECTED);
 		if (holdsItems(level.getBlockEntity(pos))) return Check.refuse(AbsorbFeedback.REFUSE_CONTAINER);
-		return new Check(new Resolved(target, source.get(), state.getBlock().getName(), null), null, null);
+		return new Check(new Resolved(target, source.get(), AbsorbFeedback.sourceName(source.get()), null), null, null);
 	}
 
 	private static Check validateEntity(ServerPlayer player, AbsorbTarget target, @Nullable Identifier expected) {
@@ -316,7 +316,7 @@ public final class AbsorbHandler {
 		if (entity.getHealth() > AbsorbCaps.MOB_HEALTH_THRESHOLD * entity.getMaxHealth()) {
 			return Check.refuse(AbsorbFeedback.REFUSE_MOB_HEALTH, Math.round(AbsorbCaps.MOB_HEALTH_THRESHOLD * 100.0F));
 		}
-		return new Check(new Resolved(target, source.get(), entity.getType().getDescription(), entity), null, null);
+		return new Check(new Resolved(target, source.get(), AbsorbFeedback.sourceName(source.get()), entity), null, null);
 	}
 
 	/** The living, non-player entity {@code id} in {@code level}; a dragon part id resolves to its dragon. */

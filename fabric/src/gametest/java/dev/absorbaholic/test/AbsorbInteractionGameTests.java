@@ -261,6 +261,8 @@ public class AbsorbInteractionGameTests {
 			assertEntry(h, p, source, 1, 1);
 			h.assertValueEqual(PlayerData.runtime(p).absorbCooldownUntil, end + AbsorbCaps.COOLDOWN_TICKS, "cooldown started");
 			h.assertTrue(AbsorbWorldSettings.get(h.getLevel().getServer()).isDiscovered(source.id()), "source discovered");
+			h.assertTrue(m.drain().stream().anyMatch(o -> o instanceof ClientboundSetSubtitleTextPacket sub
+					&& key(sub.text()).equals(source.nameKey())), "subtitle names the source (" + source.nameKey() + ")");
 		});
 		h.succeed();
 	}

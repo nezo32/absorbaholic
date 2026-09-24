@@ -200,6 +200,11 @@ public final class AbsorbFeedback {
 
 	// ---- names -------------------------------------------------------------------------------------------------
 
+	/** The display name of {@code source} ({@code nameKey}: a vanilla block / entity name or {@code absorbaholic.source.*}). */
+	public static Component sourceName(SourceDefinition source) {
+		return Texts.tr(source.nameKey());
+	}
+
 	/** The trait name of {@code source} ({@code absorbaholic.trait.<key>}). */
 	public static Component traitName(SourceDefinition source) {
 		return Texts.tr(source.traitLangKey());
