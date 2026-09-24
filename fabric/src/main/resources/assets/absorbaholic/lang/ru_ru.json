@@ -14,6 +14,8 @@
 	"absorbaholic.command.mode.on": "Режим Absorbaholic в этом мире теперь ВКЛЮЧЁН",
 	"absorbaholic.command.mode.status.off": "Режим Absorbaholic в этом мире ВЫКЛЮЧЕН",
 	"absorbaholic.command.mode.status.on": "Режим Absorbaholic в этом мире ВКЛЮЧЁН",
+	"absorbaholic.command.notify.message": "Сообщения о поглощении: %s",
+	"absorbaholic.command.notify.sound": "Звуки поглощения: %s",
 	"absorbaholic.command.remove.done": "Источник «%s» изъят из черт игрока %s",
 	"absorbaholic.command.remove.unknown": "У игрока %s нет черты от источника %s",
 	"absorbaholic.command.reset.done": "Игрок %s начинает с чистого листа: убрано черт — %s",

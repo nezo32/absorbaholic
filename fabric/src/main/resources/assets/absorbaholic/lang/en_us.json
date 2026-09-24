@@ -14,6 +14,8 @@
 	"absorbaholic.command.mode.on": "Absorbaholic Mode is now ON for this world",
 	"absorbaholic.command.mode.status.off": "Absorbaholic Mode is OFF in this world",
 	"absorbaholic.command.mode.status.on": "Absorbaholic Mode is ON in this world",
+	"absorbaholic.command.notify.message": "Absorb messages: %s",
+	"absorbaholic.command.notify.sound": "Absorb sounds: %s",
 	"absorbaholic.command.remove.done": "Removed %s from the traits of %s",
 	"absorbaholic.command.remove.unknown": "%s has no trait from source %s",
 	"absorbaholic.command.reset.done": "Reset %s: %s traits removed",
