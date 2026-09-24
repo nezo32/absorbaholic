@@ -215,22 +215,9 @@ public final class AbsorbCommands {
 		return Texts.tr(key).withStyle(style -> style.withHoverEvent(new HoverEvent.ShowText(Texts.tr(key + ".desc"))));
 	}
 
-	/**
-	 * Display name of a source: its own {@code absorbaholic.source.<path>} name when our lang has one (tag-based
-	 * sources), else the name of its first direct block / entity target, else its id.
-	 */
+	/** Display name of a source, from its registry name key (vanilla block/entity name or absorbaholic.source.*). */
 	private static Component sourceName(SourceDefinition def) {
-		String key = "absorbaholic.source." + def.id().getPath();
-		if (Texts.englishOf(key) != null) return Texts.tr(key);
-		if (!def.targets().ids().isEmpty()) {
-			Identifier first = def.targets().ids().getFirst();
-			Optional<Component> name = switch (def.kind()) {
-				case BLOCK -> BuiltInRegistries.BLOCK.getOptional(first).map(b -> (Component) b.getName());
-				case ENTITY -> BuiltInRegistries.ENTITY_TYPE.getOptional(first).map(t -> t.getDescription());
-			};
-			if (name.isPresent()) return name.get();
-		}
-		return Component.literal(def.id().toString());
+		return Texts.tr(def.nameKey());
 	}
 
 	private static Component level(int level) {
