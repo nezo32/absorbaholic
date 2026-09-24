@@ -15,7 +15,9 @@ import dev.absorbaholic.net.TraitsPayload;
 import dev.absorbaholic.net.WorldStatePayload;
 import dev.absorbaholic.trait.MovementFlagsHolder;
 import dev.absorbaholic.trait.MovementState;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents;
@@ -27,8 +29,9 @@ import org.jspecify.annotations.Nullable;
  * Client receivers of every S2C payload (they run on the render thread), all writing into {@link ClientState}:
  * sources, world state, discovered set, own traits, absorb feedback ({@link NotifyClient}), channel state, movement
  * state and auras. The movement state is re-applied whenever the LocalPlayer is recreated (respawn, dimension change).
- * Disconnecting resets everything. A {@code TraitsPayload} with {@code openScreen} goes to the screen opener that the
- * UI package installs with {@link #setTraitsScreenOpener}.
+ * Disconnecting or (re)configuring resets everything; an aura is dropped when its entity unloads. A
+ * {@code TraitsPayload} with {@code openScreen} goes to the screen opener that the UI package installs with
+ * {@link #setTraitsScreenOpener}.
  */
 public final class ClientNetworking {
 	private static @Nullable BiConsumer<Minecraft, TraitsPayload> traitsScreenOpener;
@@ -48,10 +51,16 @@ public final class ClientNetworking {
 		});
 		ClientPlayNetworking.registerGlobalReceiver(AuraPayload.TYPE, (p, ctx) -> ClientState.setAura(p));
 
-		ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> client.execute(() -> {
-			ClientState.reset();
-			AbsorbInput.reset();
-		}));
+		ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> client.execute(() -> resetAll(client)));
+		// (Re)configuration on the same connection (e.g. a proxy switching backends) never fires DISCONNECT: the next
+		// backend may be vanilla, so nothing of the previous one (movement physics, traits, auras) may survive it.
+		ClientConfigurationConnectionEvents.START.register((listener, client) -> client.execute(() -> resetAll(client)));
+		// The server only sends aura changes to trackers: forget an aura when its entity leaves this client, so an
+		// outdated one cannot come back when the entity is tracked again. The own player keeps its entry (respawn and
+		// dimension change unload the old LocalPlayer, and the server only resends the aura on change).
+		ClientEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
+			if (!(entity instanceof LocalPlayer)) ClientState.auras().remove(entity.getId());
+		});
 		// The client matcher resolves tags lazily; forget cached lookups when the server's tags arrive.
 		CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> {
 			if (client) ClientState.sources().clearCache();
@@ -78,6 +87,13 @@ public final class ClientNetworking {
 			return;
 		}
 		opener.accept(mc, payload);
+	}
+
+	/** Forgets everything the previous server told us, including the movement physics on the current player. */
+	public static void resetAll(Minecraft mc) {
+		ClientState.reset();
+		AbsorbInput.reset();
+		applyMovement(mc.player);
 	}
 
 	private static long clientTime(Minecraft mc) {

@@ -18,26 +18,25 @@ import org.jspecify.annotations.Nullable;
 /**
  * Shows an {@link AbsorbedPayload} according to {@link NotifyConfig}. Message ON: a title measured to fit (the full
  * "🧬 Absorbed: &lt;name&gt;" if it fits at title scale, else "🧬 Absorbed!" with the name moved to the subtitle), the
- * outcome's subtitle line for mutations and pure absorptions, the actionbar as sent and the notice in chat. Sound ON:
- * the outcome's sound. {@link #handle} is public so the client gametest can call it directly.
+ * outcome's line for mutations and pure absorptions in the subtitle (or appended to the actionbar when the subtitle
+ * would not fit at subtitle scale), the actionbar and the notice in chat. The title uses the title times currently in
+ * effect (vanilla defaults unless the server set others), so it never changes how later titles are timed.
+ * Sound ON: the outcome's sound. {@link #handle} is public so the client gametest can call it directly.
  */
 public final class NotifyClient {
-	/** Title timing (fade in, stay, fade out), the same as the server's vanilla-client fallback. */
-	public static final int FADE_IN = 10, STAY = 50, FADE_OUT = 15;
-	/** The title is drawn at 4x scale; it must fit the GUI width minus this margin. */
-	public static final int TITLE_SCALE = 4, TITLE_MARGIN = 8;
+	/** The title is drawn at 4x scale, the subtitle at 2x; each must fit the GUI width minus the margin. */
+	public static final int TITLE_SCALE = 4, SUBTITLE_SCALE = 2, TITLE_MARGIN = 8;
 	private static final String KEY = "absorbaholic.absorbed.";
 	private static final Component SEPARATOR = Component.literal(" · ");
 
 	private NotifyClient() {}
 
-	/** Title and optional subtitle as composed for one screen width. */
-	public record TitleLines(Component title, @Nullable Component subtitle) {}
+	/** Title, optional subtitle and the actionbar as composed for one screen width. */
+	public record Lines(Component title, @Nullable Component subtitle, Component actionbar) {}
 
 	/** What {@link #handle} showed or played (null = nothing of that kind); for the client gametest. */
-	public record Shown(@Nullable TitleLines title, @Nullable Component actionbar, @Nullable Component notice,
-			@Nullable SoundEvent sound) {
-		public static final Shown NOTHING = new Shown(null, null, null, null);
+	public record Shown(@Nullable Lines lines, @Nullable Component notice, @Nullable SoundEvent sound) {
+		public static final Shown NOTHING = new Shown(null, null, null);
 	}
 
 	/** Sound, volume and pitch of an outcome (ARCHITECTURE §6.3, same as the vanilla-client fallback). */
@@ -47,16 +46,15 @@ public final class NotifyClient {
 		LocalPlayer player = mc.player;
 		if (player == null) return Shown.NOTHING;
 		NotifySettings settings = NotifyConfig.get();
-		TitleLines lines = null;
+		Lines lines = null;
 		Component notice = null;
 		if (settings.message()) {
-			lines = composeTitle(payload.sourceName(), payload.outcome(), mc.font, mc.getWindow().getGuiScaledWidth());
+			lines = compose(payload.sourceName(), payload.actionbar(), payload.outcome(), mc.font, mc.getWindow().getGuiScaledWidth());
 			Hud hud = mc.gui.hud;
 			hud.clearTitles();
-			hud.setTimes(FADE_IN, STAY, FADE_OUT);
 			if (lines.subtitle() != null) hud.setSubtitle(lines.subtitle());
 			hud.setTitle(lines.title());
-			player.sendOverlayMessage(payload.actionbar());
+			player.sendOverlayMessage(lines.actionbar());
 			notice = payload.notice().orElse(null);
 			if (notice != null) hud.getChat().addClientSystemMessage(notice);
 		}
@@ -67,25 +65,30 @@ public final class NotifyClient {
 					s.volume(), s.pitch(), false);
 			played = s.sound();
 		}
-		return new Shown(lines, settings.message() ? payload.actionbar() : null, notice, played);
+		return new Shown(lines, notice, played);
 	}
 
 	/**
 	 * Lead decision (ARCHITECTURE §6.4): the full title when {@code font.width(full) * 4 <= guiWidth - 8}, the subtitle
 	 * then being only the outcome line (or none); otherwise the short title with the source name in the subtitle,
-	 * followed by " · " and the outcome line for special outcomes.
+	 * followed by " · " and the outcome line for special outcomes. A subtitle wider than the screen at 2x keeps only the
+	 * name (or nothing on the full-title path) and the outcome line moves to the end of the actionbar instead.
 	 */
-	public static TitleLines composeTitle(Component sourceName, MutationRoll.Outcome outcome, Font font, int guiWidth) {
+	public static Lines compose(Component sourceName, Component actionbar, MutationRoll.Outcome outcome, Font font, int guiWidth) {
 		Component special = outcome.isSpecial() ? Component.translatable(KEY + "subtitle." + outcome.name().toLowerCase(Locale.ROOT)) : null;
 		Component full = Component.translatable(KEY + "title", sourceName);
-		if (fitsTitle(font, full, guiWidth)) return new TitleLines(full, special);
-		Component subtitle = special == null ? sourceName : Component.empty().append(sourceName).append(SEPARATOR).append(special);
-		return new TitleLines(Component.translatable(KEY + "title.short"), subtitle);
+		boolean fullTitle = fits(font, full, TITLE_SCALE, guiWidth);
+		Component title = fullTitle ? full : Component.translatable(KEY + "title.short");
+		Component base = fullTitle ? null : sourceName;
+		if (special == null) return new Lines(title, base, actionbar);
+		Component subtitle = base == null ? special : Component.empty().append(base).append(SEPARATOR).append(special);
+		if (fits(font, subtitle, SUBTITLE_SCALE, guiWidth)) return new Lines(title, subtitle, actionbar);
+		return new Lines(title, base, Component.empty().append(actionbar).append(SEPARATOR).append(special));
 	}
 
-	/** Whether {@code title} fits the screen at title scale. */
-	public static boolean fitsTitle(Font font, Component title, int guiWidth) {
-		return font.width(title) * TITLE_SCALE <= guiWidth - TITLE_MARGIN;
+	/** Whether {@code text} fits the screen when drawn at {@code scale}. */
+	public static boolean fits(Font font, Component text, int scale, int guiWidth) {
+		return font.width(text) * scale <= guiWidth - TITLE_MARGIN;
 	}
 
 	public static OutcomeSound soundOf(MutationRoll.Outcome outcome) {

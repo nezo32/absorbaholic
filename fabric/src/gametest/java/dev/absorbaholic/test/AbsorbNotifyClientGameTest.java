@@ -17,20 +17,25 @@ import dev.absorbaholic.core.NotifySettings;
 import dev.absorbaholic.net.AbsorbCancelPayload;
 import dev.absorbaholic.net.AbsorbStartPayload;
 import dev.absorbaholic.net.AbsorbedPayload;
+import dev.absorbaholic.net.AuraPayload;
 import dev.absorbaholic.net.ChannelStatePayload;
 import dev.absorbaholic.net.WorldStatePayload;
 import dev.absorbaholic.registry.SourceDefinition;
 import dev.absorbaholic.registry.SourceRegistry;
 import dev.absorbaholic.registry.SourceSummary;
+import dev.absorbaholic.trait.MovementFlagsHolder;
+import dev.absorbaholic.trait.MovementState;
 import dev.absorbaholic.world.AbsorbWorldSettings;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.TestInput;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Hud;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,6 +45,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -52,19 +59,22 @@ import org.jspecify.annotations.Nullable;
  * WP-CLIENT client gametest (runClientGameTest under Xvfb).
  * <ol>
  * <li>Title measuring: the full "Absorbed: name" title exactly when {@code width * 4 <= guiWidth - 8}, else the short
- *     title with the name (and the outcome line) in the subtitle.</li>
+ *     title with the name (and the outcome line) in the subtitle; a subtitle too wide at 2x moves the outcome line to
+ *     the actionbar.</li>
  * <li>{@code /absorbaholic-notify} toggles, flips and persists the settings.</li>
- * <li>NotifyClient honours message OFF / sound OFF, and the {@code absorbed} receiver shows a server-sent payload.</li>
+ * <li>NotifyClient honours message OFF / sound OFF, leaves the title times alone, and the {@code absorbed} receiver
+ *     shows a server-sent payload.</li>
  * <li>The use-key intercept in a singleplayer world, on a note block placed by the server (vanilla use cycles its
  *     note, which makes "vanilla use happened" observable): vanilla use is untouched without sneaking, with the mode OFF,
  *     with a full hand, on a non-absorbable block and when the server lacks the mod's channel; sneak + empty hand +
  *     held use sends a heartbeat every tick and one cancel on release. With the server absorb handler installed the
  *     block is consumed after the 30-tick channel; without it the test installs a recording receiver (so the channel
- *     is advertised) and asserts the start payloads that reached the server.</li>
+ *     is advertised) and asserts the start payloads that reached the server. Also: no gesture while an item is in use,
+ *     water in the way is looked through (unless it is itself absorbable), a screen mid-hold sends one cancel.</li>
+ * <li>Client state: an unloaded entity's aura is dropped (the own one kept); a (re)configuration resets everything.</li>
  * </ol>
  */
 public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
-	private static final Identifier SOURCE_ID = Identifier.fromNamespaceAndPath("absorbaholic_test", "notify_client_note");
 	private static final String SENTINEL = "sentinel";
 	private static final int VANILLA_HOLD_TICKS = 6;
 	/** Channel (30 ticks) plus latency. */
@@ -91,38 +101,54 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 	private static void titleMeasurement(ClientGameTestContext ctx) {
 		ctx.runOnClient(mc -> {
 			Component name = Component.literal("Ice");
+			Component bar = Component.literal("bar");
+			Component shortTitle = Component.translatable("absorbaholic.absorbed.title.short");
 			Component full = Component.translatable("absorbaholic.absorbed.title", name);
 			int exact = mc.font.width(full) * NotifyClient.TITLE_SCALE + NotifyClient.TITLE_MARGIN;
 
-			NotifyClient.TitleLines fits = NotifyClient.composeTitle(name, MutationRoll.Outcome.NORMAL, mc.font, exact);
+			NotifyClient.Lines fits = NotifyClient.compose(name, bar, MutationRoll.Outcome.NORMAL, mc.font, exact);
 			check(fits.title().equals(full), "title must be the full one at exactly its width: " + fits);
 			check(fits.subtitle() == null, "a normal absorption with the full title has no subtitle: " + fits);
+			check(fits.actionbar() == bar, "the actionbar is kept as sent: " + fits);
 
-			NotifyClient.TitleLines tooNarrow = NotifyClient.composeTitle(name, MutationRoll.Outcome.NORMAL, mc.font, exact - 1);
-			check(tooNarrow.title().equals(Component.translatable("absorbaholic.absorbed.title.short")),
-					"one pixel too narrow must use the short title: " + tooNarrow);
+			NotifyClient.Lines tooNarrow = NotifyClient.compose(name, bar, MutationRoll.Outcome.NORMAL, mc.font, exact - 1);
+			check(tooNarrow.title().equals(shortTitle), "one pixel too narrow must use the short title: " + tooNarrow);
 			check(tooNarrow.subtitle() != null && tooNarrow.subtitle().getString().equals("Ice"),
 					"the short title moves the name to the subtitle: " + tooNarrow);
 
+			// special outcomes: the subtitle is measured at 2x as well
 			Component pure = Component.translatable("absorbaholic.absorbed.subtitle.pure");
-			NotifyClient.TitleLines pureFits = NotifyClient.composeTitle(name, MutationRoll.Outcome.PURE, mc.font, exact);
-			check(pureFits.subtitle() != null && pureFits.subtitle().equals(pure), "pure + full title: the pure line only: " + pureFits);
-			NotifyClient.TitleLines pureShort = NotifyClient.composeTitle(name, MutationRoll.Outcome.MUTATE_WEAKNESS, mc.font, exact - 1);
-			String expected = "Ice · " + Component.translatable("absorbaholic.absorbed.subtitle.mutate_weakness").getString();
-			check(pureShort.subtitle() != null && pureShort.subtitle().getString().equals(expected),
-					"special + short title: name · outcome line, got " + pureShort);
+			int wide = 10_000;
+			NotifyClient.Lines pureFits = NotifyClient.compose(name, bar, MutationRoll.Outcome.PURE, mc.font, wide);
+			check(pure.equals(pureFits.subtitle()), "pure + full title: the pure line only: " + pureFits);
+			Component mutation = Component.translatable("absorbaholic.absorbed.subtitle.mutate_weakness");
+			// a name long enough that the full title (4x) is wider than "name · line" (2x): the short-title path
+			Component glow = Component.literal("Glowing Blocks of the Deep Dark Caves");
+			String nameAndLine = glow.getString() + " · " + mutation.getString();
+			int subtitleExact = mc.font.width(nameAndLine) * NotifyClient.SUBTITLE_SCALE + NotifyClient.TITLE_MARGIN;
+			check(!NotifyClient.fits(mc.font, Component.translatable("absorbaholic.absorbed.title", glow), NotifyClient.TITLE_SCALE, subtitleExact),
+					"test premise: the full title does not fit where 'name · line' just fits");
+			NotifyClient.Lines both = NotifyClient.compose(glow, bar, MutationRoll.Outcome.MUTATE_WEAKNESS, mc.font, subtitleExact);
+			check(both.title().equals(shortTitle) && both.subtitle() != null && both.subtitle().getString().equals(nameAndLine),
+					"special + short title that fits: name · outcome line, got " + both);
+			check(both.actionbar() == bar, "a fitting subtitle leaves the actionbar alone: " + both);
+			NotifyClient.Lines squeezed = NotifyClient.compose(glow, bar, MutationRoll.Outcome.MUTATE_WEAKNESS, mc.font, subtitleExact - 1);
+			check(squeezed.subtitle() != null && squeezed.subtitle().getString().equals(glow.getString()),
+					"a subtitle one pixel too wide keeps only the name: " + squeezed);
+			check(squeezed.actionbar().getString().equals("bar · " + mutation.getString()),
+					"the outcome line moves to the actionbar: " + squeezed.actionbar().getString());
 
 			// the real screen: a very long name never fits at title scale
 			int gui = mc.getWindow().getGuiScaledWidth();
 			Component longName = Component.literal("Extraordinarily Long Source Name Of Many Words");
-			NotifyClient.TitleLines real = NotifyClient.composeTitle(longName, MutationRoll.Outcome.NORMAL, mc.font, gui);
-			check(!NotifyClient.fitsTitle(mc.font, Component.translatable("absorbaholic.absorbed.title", longName), gui),
+			NotifyClient.Lines real = NotifyClient.compose(longName, bar, MutationRoll.Outcome.NORMAL, mc.font, gui);
+			check(!NotifyClient.fits(mc.font, Component.translatable("absorbaholic.absorbed.title", longName), NotifyClient.TITLE_SCALE, gui),
 					"test premise: the long name overflows at " + gui);
-			check(real.subtitle() != null && real.subtitle().getString().equals(longName.getString()), "long name → subtitle: " + real);
-			NotifyClient.TitleLines shortReal = NotifyClient.composeTitle(name, MutationRoll.Outcome.NORMAL, mc.font, gui);
-			boolean fitsReal = NotifyClient.fitsTitle(mc.font, full, gui);
-			check(shortReal.title().equals(fitsReal ? full : Component.translatable("absorbaholic.absorbed.title.short")),
-					"title choice must follow the measurement at " + gui + ": " + shortReal);
+			check(real.title().equals(shortTitle) && real.subtitle() != null && real.subtitle().getString().equals(longName.getString()),
+					"long name → short title, name in the subtitle: " + real);
+			NotifyClient.Lines shortReal = NotifyClient.compose(name, bar, MutationRoll.Outcome.NORMAL, mc.font, gui);
+			boolean fitsReal = NotifyClient.fits(mc.font, full, NotifyClient.TITLE_SCALE, gui);
+			check(shortReal.title().equals(fitsReal ? full : shortTitle), "title choice must follow the measurement at " + gui + ": " + shortReal);
 		});
 	}
 
@@ -195,7 +221,7 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 		ctx.runOnClient(mc -> {
 			resetHud(mc);
 			NotifyClient.Shown shown = NotifyClient.handle(payload(MutationRoll.Outcome.PURE), mc);
-			check(shown.title() == null && shown.actionbar() == null && shown.notice() == null, "message OFF but shown: " + shown);
+			check(shown.lines() == null && shown.notice() == null, "message OFF but shown: " + shown);
 			check(shown.sound() == NotifyClient.soundOf(MutationRoll.Outcome.PURE).sound(), "sound ON but played " + shown.sound());
 			check(SENTINEL.equals(text(hudField(mc, "overlayMessageString"))), "message OFF but the actionbar changed");
 			check(hudField(mc, "title") == null, "message OFF but a title is shown");
@@ -207,20 +233,27 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 			resetHud(mc);
 			NotifyClient.Shown shown = NotifyClient.handle(payload(MutationRoll.Outcome.MUTATE_TRAIT), mc);
 			check(shown.sound() == null, "sound OFF but played " + shown.sound());
-			check(shown.title() != null && shown.notice() != null, "message ON but nothing shown: " + shown);
-			check("Slippery II · Brittle I".equals(text(hudField(mc, "overlayMessageString"))), "actionbar not shown");
-			check(shown.title().title().equals(hudField(mc, "title")), "HUD title differs from the composed one");
-			check(shown.title().subtitle() != null && shown.title().subtitle().equals(hudField(mc, "subtitle")),
-					"a mutation must show its subtitle line");
+			check(shown.lines() != null && shown.notice() != null, "message ON but nothing shown: " + shown);
+			String bar = text(hudField(mc, "overlayMessageString"));
+			check(bar != null && bar.startsWith("Slippery II · Brittle I") && bar.equals(shown.lines().actionbar().getString()),
+					"actionbar not shown: " + bar);
+			check(shown.lines().title().equals(hudField(mc, "title")), "HUD title differs from the composed one");
+			check(java.util.Objects.equals(shown.lines().subtitle(), hudField(mc, "subtitle")), "HUD subtitle differs from the composed one");
+			String line = Component.translatable("absorbaholic.absorbed.subtitle.mutate_trait").getString();
+			String sub = text(hudField(mc, "subtitle"));
+			check((sub != null && sub.contains(line)) || bar.endsWith(line), "the mutation line is shown nowhere");
 		});
 
 		// both ON: the normal outcome's sound
 		NotifyConfig.set(NotifySettings.DEFAULT);
 		ctx.runOnClient(mc -> {
 			resetHud(mc);
+			mc.gui.hud.resetTitleTimes();
+			List<Object> times = titleTimes(mc);
 			NotifyClient.Shown shown = NotifyClient.handle(payload(MutationRoll.Outcome.NORMAL), mc);
 			check(shown.sound() == NotifyClient.soundOf(MutationRoll.Outcome.NORMAL).sound(), "normal sound expected: " + shown);
-			check(shown.title() != null, "title expected");
+			check(shown.lines() != null && hudField(mc, "title") != null, "title expected");
+			check(titleTimes(mc).equals(times), "showing our title changed the title times for later titles: " + times + " → " + titleTimes(mc));
 		});
 	}
 
@@ -298,10 +331,139 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 		serverLacksMod(ctx, sp, pos);
 		setSources(ctx, sp, note);
 
-		// 6. the gesture: sneak + empty hand + hold use
+		// 6. an item already in use (a raised off-hand shield) never starts the gesture
+		itemInUse(ctx, sp, pos);
+
+		// 7. water in the way is looked through unless the water itself is absorbable
+		throughWater(ctx, sp, pos, note);
+
+		// 8. a screen opening mid-hold ends the gesture with one cancel
+		screenCancels(ctx, pos);
+
+		// 9. the gesture: sneak + empty hand + hold use
 		ctx.runOnClient(mc -> check(AbsorbInput.shouldIntercept(mc), "all preconditions hold but no intercept"));
 		absorb(ctx, sp, pos, ownReceivers);
 		in.releaseKey(o -> o.keyShift);
+
+		// client state hygiene
+		auraUnload(ctx, sp);
+		reconfigurationResets(ctx);
+	}
+
+	private static void itemInUse(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos) {
+		TestInput in = ctx.getInput();
+		sp.getServer().runOnServer(s -> player(s).setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.SHIELD)));
+		ctx.waitFor(mc -> mc.player.getOffhandItem().is(Items.SHIELD), 20 * 5);
+		float yaw = ctx.computeOnClient(mc -> mc.player.getYRot());
+		in.lookAt(yaw, -90.0F); // the sky: vanilla raises the shield
+		in.holdKey(o -> o.keyUse);
+		ctx.waitFor(mc -> mc.player.isUsingItem(), 20 * 5);
+		long before = heartbeats(ctx);
+		in.lookAt(pos);
+		ctx.waitTicks(4);
+		ctx.runOnClient(mc -> {
+			check(mc.player.isUsingItem(), "test premise: the shield stays raised");
+			check(AbsorbInput.target(mc) == null && AbsorbInput.activeTarget() == null, "item in use: no absorb target");
+		});
+		check(heartbeats(ctx) == before, "item in use: no absorb heartbeat may be sent");
+		in.releaseKey(o -> o.keyUse);
+		sp.getServer().runOnServer(s -> player(s).setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY));
+		ctx.waitFor(mc -> mc.player.getOffhandItem().isEmpty() && !mc.player.isUsingItem(), 20 * 5);
+		in.lookAt(pos);
+		ctx.waitTicks(2);
+	}
+
+	private static void throughWater(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos, SourceDefinition note) {
+		BlockPos water = pos.west(); // between the eyes and the note block
+		sp.getServer().runOnServer(s -> {
+			s.tickRateManager().setFrozen(true); // no flowing
+			player(s).level().setBlockAndUpdate(water, Blocks.WATER.defaultBlockState());
+		});
+		try {
+			ctx.waitFor(mc -> mc.level.getFluidState(water).isSource(), 20 * 5);
+			ctx.getInput().lookAt(pos);
+			ctx.waitTicks(2);
+			ctx.runOnClient(mc -> {
+				AbsorbTarget t = AbsorbInput.target(mc);
+				check(AbsorbTarget.block(pos).equals(t), "water in the way must be looked through, got " + t);
+			});
+			setSources(ctx, sp, note, source(Blocks.WATER));
+			ctx.runOnClient(mc -> {
+				AbsorbTarget t = AbsorbInput.target(mc);
+				check(AbsorbTarget.fluid(water).equals(t), "an absorbable water source must be the target, got " + t);
+			});
+		} finally {
+			setSources(ctx, sp, note);
+			sp.getServer().runOnServer(s -> {
+				player(s).level().setBlockAndUpdate(water, Blocks.AIR.defaultBlockState());
+				s.tickRateManager().setFrozen(false);
+			});
+		}
+		ctx.waitFor(mc -> mc.level.getBlockState(water).isAir(), 20 * 5);
+		ctx.waitTicks(2);
+	}
+
+	private static void screenCancels(ClientGameTestContext ctx, BlockPos pos) {
+		TestInput in = ctx.getInput();
+		long cancelsBefore = ctx.computeOnClient(mc -> AbsorbInput.cancelsSent());
+		in.holdKey(o -> o.keyUse);
+		ctx.waitTicks(6);
+		ctx.runOnClient(mc -> check(AbsorbTarget.block(pos).equals(AbsorbInput.activeTarget()), "holding: the gesture must be running"));
+		ctx.setScreen(() -> new Screen(Component.literal("test")) {});
+		ctx.waitTicks(2);
+		ctx.runOnClient(mc -> {
+			check(AbsorbInput.activeTarget() == null, "a screen must end the gesture");
+			check(AbsorbInput.cancelsSent() == cancelsBefore + 1, "exactly one cancel expected, got " + (AbsorbInput.cancelsSent() - cancelsBefore));
+		});
+		ctx.setScreen(() -> null);
+		in.releaseKey(o -> o.keyUse);
+		in.releaseKey(o -> o.keyShift); // the screen released every key; press sneak again
+		in.holdKey(o -> o.keyShift);
+		ctx.waitTicks(3);
+		in.lookAt(pos);
+		ctx.waitTicks(2);
+	}
+
+	private static void auraUnload(ClientGameTestContext ctx, TestSingleplayerContext sp) {
+		sp.getServer().runCommand("summon minecraft:pig ~3 ~ ~3 {NoAI:1b}");
+		ctx.waitFor(mc -> pigId(mc) >= 0, 20 * 5);
+		int pigId = ctx.computeOnClient(AbsorbNotifyClientGameTest::pigId);
+		int self = ctx.computeOnClient(mc -> mc.player.getId());
+		ctx.runOnClient(mc -> {
+			ClientState.setAura(new AuraPayload(pigId, 0xFF0000, 1.0F));
+			ClientState.setAura(new AuraPayload(self, 0x00FF00, 1.0F));
+		});
+		sp.getServer().runCommand("kill @e[type=minecraft:pig]");
+		ctx.waitFor(mc -> pigId(mc) < 0, 20 * 5);
+		ctx.runOnClient(mc -> {
+			check(ClientState.aura(pigId) == null, "the aura of an unloaded entity must be dropped");
+			check(ClientState.aura(self) != null, "the own aura must survive");
+			ClientState.setAura(new AuraPayload(self, 0, 0.0F));
+		});
+	}
+
+	private static int pigId(Minecraft mc) {
+		for (Entity e : mc.level.entitiesForRendering()) {
+			if (e.getType() == EntityTypes.PIG) return e.getId();
+		}
+		return -1;
+	}
+
+	private static void reconfigurationResets(ClientGameTestContext ctx) {
+		MovementState fake = new MovementState(0, 0.123F, 0.0F);
+		ctx.runOnClient(mc -> {
+			ClientState.setMovement(fake);
+			ClientState.setAura(new AuraPayload(424242, 0xFF0000, 1.0F));
+			((MovementFlagsHolder) mc.player).absorbaholic$setMovement(fake);
+			check(ClientState.serverHasMod(), "test premise: world state known");
+			// what Fabric fires when the server (or a proxy) switches this connection back to configuration
+			ClientConfigurationConnectionEvents.START.invoker().onConfigurationStart(null, mc);
+			check(!ClientState.serverHasMod() && ClientState.auras().isEmpty() && ClientState.movement().equals(MovementState.NONE),
+					"reconfiguration must reset the client state");
+			check(((MovementFlagsHolder) mc.player).absorbaholic$movement().equals(MovementState.NONE),
+					"reconfiguration must clear the movement physics of the current player");
+			check(AbsorbInput.activeTarget() == null && !AbsorbInput.shouldIntercept(mc), "no gesture after a reset");
+		});
 	}
 
 	private static void absorb(ClientGameTestContext ctx, TestSingleplayerContext sp, BlockPos pos, boolean ownReceivers) {
@@ -408,14 +570,16 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 		ctx.runOnClient(mc -> check(ClientState.modeEnabled() == on, "client mode is not " + on));
 	}
 
-	/** The same single source on both sides (the client list is set directly: no dependency on the sources sync). */
-	private static void setSources(ClientGameTestContext ctx, TestSingleplayerContext sp, SourceDefinition source) {
-		sp.getServer().runOnServer(s -> SourceRegistry.set(List.of(source)));
-		ctx.runOnClient(mc -> ClientState.setSources(List.of(SourceSummary.of(source))));
+	/** The same sources on both sides (the client list is set directly: no dependency on the sources sync). */
+	private static void setSources(ClientGameTestContext ctx, TestSingleplayerContext sp, SourceDefinition... sources) {
+		List<SourceDefinition> list = List.of(sources);
+		sp.getServer().runOnServer(s -> SourceRegistry.set(list));
+		ctx.runOnClient(mc -> ClientState.setSources(list.stream().map(SourceSummary::of).toList()));
 	}
 
 	private static SourceDefinition source(Block block) {
-		return TestSupport.blockSource(SOURCE_ID.getPath(), BuiltInRegistries.BLOCK.getKey(block), 3, List.of(), List.of(), List.of(), List.of());
+		Identifier id = BuiltInRegistries.BLOCK.getKey(block);
+		return TestSupport.blockSource("notify_client_" + id.getPath(), id, 3, List.of(), List.of(), List.of(), List.of());
 	}
 
 	private static ServerPlayer player(MinecraftServer s) {
@@ -425,6 +589,10 @@ public class AbsorbNotifyClientGameTest implements FabricClientGameTest {
 	private static void resetHud(Minecraft mc) {
 		mc.gui.hud.clearTitles();
 		mc.gui.hud.setOverlayMessage(Component.literal(SENTINEL), false);
+	}
+
+	private static List<Object> titleTimes(Minecraft mc) {
+		return List.of(hudField(mc, "titleFadeInTime"), hudField(mc, "titleStayTime"), hudField(mc, "titleFadeOutTime"));
 	}
 
 	private static @Nullable String text(@Nullable Object component) {

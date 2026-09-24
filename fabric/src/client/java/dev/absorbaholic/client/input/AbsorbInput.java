@@ -54,8 +54,9 @@ public final class AbsorbInput {
 	/**
 	 * The absorbable target under the crosshair when every gesture precondition holds, else null. A living entity from
 	 * {@code mc.hitResult} wins; any other entity under the crosshair means "not ours" (vanilla interaction). Otherwise
-	 * a fluid-inclusive pick within block reach: a source fluid in a liquid block is a FLUID target, any other block a
-	 * BLOCK target. Never throws (a failure is logged once and counts as "no target").
+	 * a fluid-inclusive pick within block reach: a source fluid with an absorb source is a FLUID target; any other fluid
+	 * is looked through with a pick without fluids, whose block is a BLOCK target. Nothing while an item is in use.
+	 * Never throws (a failure is logged once and counts as "no target").
 	 */
 	public static @Nullable AbsorbTarget target(Minecraft mc) {
 		try {
@@ -74,6 +75,8 @@ public final class AbsorbInput {
 		ClientLevel level = mc.level;
 		if (player == null || level == null) return null;
 		if (!ClientState.modeEnabled() || !AbsorbRules.poseAllows(player)) return null;
+		// vanilla never calls startUseItem while an item is in use (a raised shield, eating): no gesture either
+		if (player.isUsingItem()) return null;
 		if (!ClientPlayNetworking.canSend(AbsorbStartPayload.TYPE)) return null;
 
 		HitResult crosshair = mc.hitResult;
@@ -85,14 +88,20 @@ public final class AbsorbInput {
 			return null;
 		}
 
-		HitResult hit = player.pick(player.blockInteractionRange(), 1.0F, true);
+		double range = player.blockInteractionRange();
+		HitResult withFluids = player.pick(range, 1.0F, true);
+		if (withFluids instanceof BlockHitResult fluidHit && withFluids.getType() == HitResult.Type.BLOCK
+				&& level.getBlockState(fluidHit.getBlockPos()).getBlock() instanceof LiquidBlock) {
+			// Keep a fluid hit only when that fluid is an absorbable source; otherwise look through it (water in the
+			// way, or eyes under water) at the block behind, as vanilla use and the server's block raycast do.
+			FluidState fluid = level.getFluidState(fluidHit.getBlockPos());
+			if (fluid.isSource() && ClientState.sources().forFluid(fluid).isPresent()) return AbsorbTarget.fluid(fluidHit.getBlockPos());
+		}
+		HitResult hit = player.pick(range, 1.0F, false);
 		if (!(hit instanceof BlockHitResult blockHit) || hit.getType() != HitResult.Type.BLOCK) return null;
 		BlockPos pos = blockHit.getBlockPos();
 		BlockState state = level.getBlockState(pos);
-		if (state.getBlock() instanceof LiquidBlock) {
-			FluidState fluid = level.getFluidState(pos);
-			return fluid.isSource() && ClientState.sources().forFluid(fluid).isPresent() ? AbsorbTarget.fluid(pos) : null;
-		}
+		if (state.getBlock() instanceof LiquidBlock) return null;
 		if (AbsorbRules.isProtected(level, pos, state)) return null;
 		return ClientState.sources().forBlock(state).isPresent() ? AbsorbTarget.block(pos) : null;
 	}

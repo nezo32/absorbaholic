@@ -25,6 +25,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.storage.LevelResource;
@@ -293,7 +294,11 @@ public class AbsorbClientGameTest implements FabricClientGameTest {
 		ctx.waitFor(mc -> Files.isRegularFile(file), 20 * 10);
 		try {
 			CompoundTag root = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
-			boolean saved = root.getCompoundOrEmpty("data").getBooleanOr("enabled", false);
+			// Strict: ON must be written explicitly; OFF may be omitted (optionalFieldOf does not write its default), so
+			// the file is also decoded with the real codec, which is how the game reads it back.
+			CompoundTag data = root.getCompound("data").orElseThrow(() -> new AssertionError(file + ": no data in " + root));
+			if (expected && data.getBoolean("enabled").isEmpty()) throw new AssertionError(file + ": no 'enabled' key in " + root);
+			boolean saved = AbsorbWorldSettings.CODEC.parse(NbtOps.INSTANCE, data).getOrThrow(AssertionError::new).enabled();
 			if (saved != expected) throw new AssertionError(file + ": enabled " + saved + ", expected " + expected + " (" + root + ")");
 		} catch (IOException e) {
 			throw new AssertionError("cannot read " + file, e);
