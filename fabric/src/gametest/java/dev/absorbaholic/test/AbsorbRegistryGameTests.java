@@ -65,7 +65,7 @@ public class AbsorbRegistryGameTests {
 	 * Lead's switch: true once every behavior package has landed. Then no shipped source may be skipped at all;
 	 * until then a source may only be skipped because it uses a behavior type that isn't registered yet.
 	 */
-	private static final boolean STRICT_ALL_RESOLVE = false;
+	private static final boolean STRICT_ALL_RESOLVE = true;
 	/** At least this many are shipped with the mod (design/sources.md). */
 	private static final int SHIPPED_SOURCES = 128;
 
