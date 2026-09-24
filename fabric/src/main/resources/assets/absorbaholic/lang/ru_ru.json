@@ -1,4 +1,6 @@
 {
+	"absorbaholic.message.lost": "☠ Поглощённые черты сгинули вместе с тобой (сохранение после смерти выключено).",
+	"absorbaholic.message.wiped": "☠ Смертельное проклятие стёрло все твои поглощённые черты!",
 	"absorbaholic.source.amethyst": "Аметист",
 	"absorbaholic.source.ancient_debris": "Древние обломки",
 	"absorbaholic.source.cactus": "Кактус",
