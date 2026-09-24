@@ -11,13 +11,21 @@ import com.google.gson.JsonObject;
  * against the game (attributes, behavior types, params codecs) into a {@code SourceDefinition}. Pure.
  *
  * @param targets block / entity type ids and {@code #tag} ids, as written
+ * @param name optional translation key of the source's display name (e.g. {@code absorbaholic.source.wood} for a
+ *        multi-target source); absent = derived by the registry layer
  * @param icon optional item id
  * @param color 0xRRGGBB aura color
  */
-public record SourceSpec(SourceKind kind, List<String> targets, Optional<String> icon, int color, Tier tier, int maxLevel,
-		SideSpec trait, SideSpec weakness) {
+public record SourceSpec(SourceKind kind, List<String> targets, Optional<String> name, Optional<String> icon, int color, Tier tier,
+		int maxLevel, SideSpec trait, SideSpec weakness) {
 	public SourceSpec {
 		targets = List.copyOf(targets);
+	}
+
+	/** Without an explicit display name. */
+	public SourceSpec(SourceKind kind, List<String> targets, Optional<String> icon, int color, Tier tier, int maxLevel,
+			SideSpec trait, SideSpec weakness) {
+		this(kind, targets, Optional.empty(), icon, color, tier, maxLevel, trait, weakness);
 	}
 
 	/** The trait or the weakness half of a source. {@code key} names lang keys {@code absorbaholic.trait|weakness.<key>}. */
