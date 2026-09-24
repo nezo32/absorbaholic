@@ -60,6 +60,10 @@ jobs:
         run: bash scripts/check-inlined-script.sh
       - name: Reusable workflows match the pinned upstream revision
         run: bash scripts/check-reusable-mirror.sh
+      - name: Source and caps tables in the docs are up to date
+        run: |
+          python3 scripts/test/test_gen_source_table.py
+          python3 scripts/gen-source-table.py --check
 
   mod:
     uses: ./.github/workflows/reusable-build-gradle.yml

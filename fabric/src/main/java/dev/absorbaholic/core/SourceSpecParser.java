@@ -1,5 +1,8 @@
 package dev.absorbaholic.core;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +11,14 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.Strictness;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 /**
  * Structural parsing and validation of a source JSON (schema v1, see ARCHITECTURE.md / SPEC). Never throws: a bad
@@ -38,8 +47,48 @@ public final class SourceSpecParser {
 	private static final Pattern NAMESPACE = Pattern.compile("[a-z0-9_.-]+");
 	private static final Pattern PATH = Pattern.compile("[a-z0-9_./-]+");
 	private static final Pattern KEY = Pattern.compile("[a-z0-9_]+");
+	private static final Pattern TRANSLATION_KEY = Pattern.compile("\\S+");
 
 	private SourceSpecParser() {}
+
+	/** Reads one source file as strict JSON (like vanilla's data loaders), then {@link #parse(JsonElement) parses} it. Never throws. */
+	public static Result read(Reader reader) {
+		JsonElement root;
+		try {
+			root = readStrict(reader);
+		} catch (IOException | RuntimeException e) {
+			return invalid("malformed JSON: " + describe(e));
+		}
+		if (root.isJsonNull()) return invalid("empty file (or JSON null)");
+		return parse(root);
+	}
+
+	/** {@link #read(Reader)} over a string. */
+	public static Result parseText(String json) {
+		return read(new StringReader(json));
+	}
+
+	/** Strict JSON: no comments, unquoted names, single quotes or trailing data. An empty document is JSON null. */
+	public static JsonElement readStrict(Reader reader) throws IOException {
+		JsonReader json = new JsonReader(reader);
+		json.setStrictness(Strictness.STRICT);
+		JsonElement element = JsonParser.parseReader(json);
+		if (!element.isJsonNull() && json.peek() != JsonToken.END_DOCUMENT) {
+			throw new JsonSyntaxException("unexpected data after the JSON value at " + json.getPath());
+		}
+		return element;
+	}
+
+	/** First line of the innermost message (Gson wraps causes and appends troubleshooting links). */
+	private static String describe(Throwable e) {
+		Throwable cause = e;
+		while ((cause instanceof JsonSyntaxException || cause instanceof JsonIOException) && cause.getCause() != null) {
+			cause = cause.getCause();
+		}
+		String message = cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
+		int newline = message.indexOf('\n');
+		return newline < 0 ? message : message.substring(0, newline);
+	}
 
 	public static Result parse(JsonElement root) {
 		if (root == null || !root.isJsonObject()) return invalid("root must be a JSON object");
@@ -70,6 +119,16 @@ public final class SourceSpecParser {
 				} else {
 					targets.add(id.get());
 				}
+			}
+		}
+
+		Optional<String> name = Optional.empty();
+		if (obj.has("name")) {
+			JsonElement n = obj.get("name");
+			if (!isString(n) || !TRANSLATION_KEY.matcher(n.getAsString()).matches()) {
+				errors.add("\"name\" must be a translation key string (no spaces), got " + n);
+			} else {
+				name = Optional.of(n.getAsString());
 			}
 		}
 
@@ -109,7 +168,7 @@ public final class SourceSpecParser {
 		SourceSpec.SideSpec weakness = side(obj, "weakness", maxLevel, errors);
 
 		if (!errors.isEmpty()) return new Result.Invalid(errors);
-		return new Result.Parsed(new SourceSpec(kind, targets, icon, color, tier, maxLevel, trait, weakness));
+		return new Result.Parsed(new SourceSpec(kind, targets, name, icon, color, tier, maxLevel, trait, weakness));
 	}
 
 	private static SourceSpec.SideSpec side(JsonObject root, String name, int maxLevel, List<String> errors) {

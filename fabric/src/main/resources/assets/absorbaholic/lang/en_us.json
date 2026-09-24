@@ -1,4 +1,6 @@
 {
+	"absorbaholic.message.lost": "☠ Your absorbed traits died with you (keep-on-death is off).",
+	"absorbaholic.message.wiped": "☠ A deathly curse wiped out all your absorbed traits!",
 	"absorbaholic.source.amethyst": "Amethyst",
 	"absorbaholic.source.ancient_debris": "Ancient Debris",
 	"absorbaholic.source.cactus": "Cactus",
