@@ -12,6 +12,7 @@ import dev.absorbaholic.net.WorldStatePayload;
 import dev.absorbaholic.player.PlayerTraits;
 import dev.absorbaholic.registry.SourceMatcher;
 import dev.absorbaholic.registry.SourceSummary;
+import dev.absorbaholic.trait.MovementState;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public final class ClientState {
 	private static PlayerTraits ownTraits = PlayerTraits.EMPTY;
 	private static final Map<Integer, AuraPayload> auras = new HashMap<>();
 	private static @Nullable ChannelStatePayload channel;
+	private static MovementState movement = MovementState.NONE;
 	private static long channelReceivedAt;
 
 	private ClientState() {}
@@ -38,6 +40,16 @@ public final class ClientState {
 		ownTraits = PlayerTraits.EMPTY;
 		auras.clear();
 		channel = null;
+		movement = MovementState.NONE;
+	}
+
+	/** Last movement state from the server; re-apply it to a new LocalPlayer (respawn / dimension change). */
+	public static MovementState movement() {
+		return movement;
+	}
+
+	public static void setMovement(MovementState state) {
+		movement = state;
 	}
 
 	public static boolean serverHasMod() {

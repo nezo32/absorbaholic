@@ -4,7 +4,8 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * WP-ENGINE. The only way behaviors deal direct weakness damage: {@code absorbaholic:weakness} damage type
- * (data/absorbaholic/damage_type/weakness.json; tags bypasses_armor, no_knockback; death message
+ * (data/absorbaholic/damage_type/weakness.json: message_id absorbaholic.weakness, scaling never, exhaustion 0; tags
+ * bypasses_armor, bypasses_shield, no_knockback; death message
  * {@code death.attack.absorbaholic.weakness}), amount limited by the player's {@code DamageGate}. The engine skips
  * weakness multipliers for this damage type, so it is never amplified twice.
  */

@@ -16,10 +16,14 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -32,37 +36,47 @@ import net.minecraft.world.level.block.state.BlockState;
  * <li>{@code "condition_blocks"}: block ids / #tags for {@code on_block};</li>
  * <li>{@code "condition_entities"}, {@code "condition_radius"} (default 8): entity type ids / #tags for {@code near_entity}.</li>
  * </ul>
+ * No fields = always true. The catalog asks tick behaviors to evaluate conditions every 10 ticks (cache in the
+ * behavior's due tick); hit-time behaviors (damage_multiplier) evaluate at hit time.
  * No fields = always true. Unknown names fail decoding (the source is skipped with a WARN). Names are in
  * {@link #PREDICATES}; add new ones there (owner: WP-BEH-B).
  */
 public final class Condition {
 	public static final Condition ALWAYS = new Condition(List.of(), List.of(), List.of(), List.of(), 8.0);
 
-	/** Named predicates. Cheap checks only: conditions are evaluated on periodic ticks and damage events. */
+	/**
+	 * Named predicates, exactly as specified in design/behaviors.md §0.2 (lead-approved: starving = food 0; cold =
+	 * powder snow or snow / ice at or below the feet; hot = lava, biome base temperature &gt;= 1.5 or the Nether).
+	 * Cheap checks only.
+	 */
 	public static final Map<String, BiPredicate<ServerPlayer, Condition>> PREDICATES = Map.ofEntries(
-			Map.entry("wet", (p, c) -> p.isInWaterOrRain()),
-			Map.entry("dry", (p, c) -> !p.isInWaterOrRain()),
+			Map.entry("always", (p, c) -> true),
 			Map.entry("in_water", (p, c) -> p.isInWater()),
-			Map.entry("underwater", (p, c) -> p.isUnderWater()),
-			Map.entry("in_rain", (p, c) -> p.level().isRainingAt(eye(p)) || p.level().isRainingAt(p.blockPosition())),
+			Map.entry("underwater", (p, c) -> p.isEyeInFluid(FluidTags.WATER)),
+			Map.entry("wet", (p, c) -> p.isInWater() || inRain(p) || p.level().getBlockState(p.blockPosition()).is(Blocks.BUBBLE_COLUMN)),
+			Map.entry("dry", (p, c) -> !(p.isInWater() || inRain(p) || p.level().getBlockState(p.blockPosition()).is(Blocks.BUBBLE_COLUMN))),
+			Map.entry("in_rain", (p, c) -> inRain(p)),
+			Map.entry("thundering", (p, c) -> p.level().isThundering() && p.level().dimensionType().hasSkyLight()),
+			Map.entry("in_sunlight", (p, c) -> p.level().isBrightOutside() && !p.isInWaterOrRain() && !p.isInPowderSnow && !p.wasInPowderSnow
+					&& p.level().canSeeSky(eye(p)) && p.getLightLevelDependentMagicValue() > 0.5F),
+			Map.entry("in_darkness", (p, c) -> p.level().getMaxLocalRawBrightness(p.blockPosition()) <= 4),
+			Map.entry("open_sky", (p, c) -> p.level().dimensionType().hasSkyLight() && p.level().getBrightness(LightLayer.SKY, eye(p)) == 15),
+			Map.entry("day", (p, c) -> !p.level().dimensionType().hasFixedTime() && p.level().isBrightOutside()),
+			Map.entry("night", (p, c) -> !p.level().dimensionType().hasFixedTime() && p.level().isDarkOutside()),
 			Map.entry("in_lava", (p, c) -> p.isInLava()),
-			Map.entry("open_sky", (p, c) -> p.level().canSeeSky(eye(p))),
-			Map.entry("in_sunlight", (p, c) -> p.level().isBrightOutside() && !p.isInWaterOrRain() && p.level().canSeeSky(eye(p))),
-			Map.entry("day", (p, c) -> p.level().isBrightOutside()),
-			Map.entry("night", (p, c) -> p.level().isDarkOutside()),
-			Map.entry("in_darkness", (p, c) -> p.level().getMaxLocalRawBrightness(eye(p)) <= 4),
-			Map.entry("thundering", (p, c) -> p.level().isThundering()),
-			Map.entry("hot", (p, c) -> p.level().dimension() == Level.NETHER
-					|| p.level().getBiome(p.blockPosition()).value().getBaseTemperature() > 1.0F),
-			Map.entry("cold", (p, c) -> p.level().getBiome(p.blockPosition()).value().getBaseTemperature() < 0.15F),
+			Map.entry("on_fire", (p, c) -> p.isOnFire()),
+			Map.entry("cold", Condition::cold),
+			Map.entry("hot", (p, c) -> p.isInLava() || p.level().dimension() == Level.NETHER
+					|| p.level().getBiome(p.blockPosition()).value().getBaseTemperature() >= 1.5F),
+			Map.entry("in_overworld", (p, c) -> p.level().dimension() == Level.OVERWORLD),
 			Map.entry("in_nether", (p, c) -> p.level().dimension() == Level.NETHER),
 			Map.entry("in_end", (p, c) -> p.level().dimension() == Level.END),
-			Map.entry("in_overworld", (p, c) -> p.level().dimension() == Level.OVERWORLD),
-			Map.entry("low_health", (p, c) -> p.getHealth() <= p.getMaxHealth() * 0.3F),
-			Map.entry("starving", (p, c) -> p.getFoodData().getFoodLevel() <= 6),
 			Map.entry("sneaking", (p, c) -> p.isShiftKeyDown()),
 			Map.entry("sprinting", (p, c) -> p.isSprinting()),
-			Map.entry("airborne", (p, c) -> !p.onGround() && !p.isInWater() && !p.isInLava() && !p.onClimbable()),
+			Map.entry("airborne", (p, c) -> !p.onGround() && !p.isInWater() && !p.isInLava() && !p.onClimbable() && !p.isPassenger()
+					&& !p.getAbilities().flying),
+			Map.entry("low_health", (p, c) -> p.getHealth() <= p.getMaxHealth() * 0.3F),
+			Map.entry("starving", (p, c) -> p.getFoodData().getFoodLevel() == 0),
 			Map.entry("on_block", Condition::onBlock),
 			Map.entry("near_entity", Condition::nearEntity));
 
@@ -120,7 +134,7 @@ public final class Condition {
 			String name = n.startsWith("!") ? n.substring(1) : n;
 			if (!PREDICATES.containsKey(name)) return DataResult.error(() -> "unknown condition \"" + name + "\"");
 		}
-		if (radius <= 0 || radius > 32) return DataResult.error(() -> "condition_radius must be in (0, 32]");
+		if (radius <= 0 || radius > 16) return DataResult.error(() -> "condition_radius must be in (0, 16]");
 		for (String b : blocks) {
 			if (Identifier.tryParse(b.startsWith("#") ? b.substring(1) : b) == null) return DataResult.error(() -> "bad condition_blocks entry " + b);
 		}
@@ -156,8 +170,19 @@ public final class Condition {
 		return BlockPos.containing(p.getX(), p.getEyeY(), p.getZ());
 	}
 
-	private static boolean onBlock(ServerPlayer p, Condition c) {
+	private static boolean inRain(ServerPlayer p) {
+		return p.level().isRainingAt(p.blockPosition()) || p.level().isRainingAt(eye(p));
+	}
+
+	private static boolean cold(ServerPlayer p, Condition c) {
+		if (p.isInPowderSnow || p.wasInPowderSnow) return true;
+		BlockState feet = p.level().getBlockState(p.blockPosition());
 		BlockState below = p.level().getBlockState(p.getOnPos());
+		return feet.is(BlockTags.SNOW) || feet.is(BlockTags.ICE) || below.is(BlockTags.SNOW) || below.is(BlockTags.ICE);
+	}
+
+	private static boolean onBlock(ServerPlayer p, Condition c) {
+		BlockState below = p.level().getBlockState(p.getBlockPosBelowThatAffectsMyMovement());
 		BlockState feet = p.level().getBlockState(p.blockPosition()); // snow layers, carpets
 		return c.matchesBlock(below) || c.matchesBlock(feet);
 	}
@@ -175,7 +200,7 @@ public final class Condition {
 	private static boolean nearEntity(ServerPlayer p, Condition c) {
 		ServerLevel level = p.level();
 		return !level.getEntitiesOfClass(LivingEntity.class, p.getBoundingBox().inflate(c.radius),
-				e -> e != p && e.isAlive() && c.matchesEntity(e)).isEmpty();
+				e -> e != p && e.isAlive() && !e.isSpectator() && c.matchesEntity(e)).isEmpty();
 	}
 
 	private boolean matchesEntity(LivingEntity e) {

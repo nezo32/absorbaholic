@@ -19,7 +19,7 @@ class FactorMathTest {
 	void otherFactors() {
 		assertEquals(AbsorbCaps.DAMAGE_DEALT_MAX, FactorMath.outgoing(10F));
 		assertEquals(AbsorbCaps.HEAL_FACTOR_MIN, FactorMath.heal(0F));
-		assertEquals(0F, FactorMath.exhaustion(0F));
+		assertEquals(AbsorbCaps.EXHAUSTION_FACTOR_MIN, FactorMath.exhaustion(0F));
 		assertEquals(1.0, FactorMath.visibility(Double.NaN));
 	}
 }

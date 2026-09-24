@@ -7,7 +7,8 @@ import java.util.Map;
 
 /**
  * The cached, immutable set of a player's active behavior entries, indexed by hook so dispatch only visits entries
- * that override that hook. Also carries the OR of their {@link MovementFlags}. Rebuilt by the engine on change.
+ * that override that hook, in trait acquisition order (the order triggers are offered in). Also carries the merged
+ * {@link MovementState}. Rebuilt by the engine on change.
  */
 public final class ActiveSet {
 	public static final ActiveSet EMPTY = new ActiveSet(List.of());
@@ -16,18 +17,18 @@ public final class ActiveSet {
 
 	private final List<ActiveBehavior<?>> all;
 	private final Map<Hook, ActiveBehavior<?>[]> byHook = new EnumMap<>(Hook.class);
-	private final int movementFlags;
+	private final MovementState movement;
 
 	public ActiveSet(List<ActiveBehavior<?>> entries) {
 		this.all = List.copyOf(entries);
 		Map<Hook, List<ActiveBehavior<?>>> lists = new EnumMap<>(Hook.class);
-		int flags = 0;
+		MovementState move = MovementState.NONE;
 		for (ActiveBehavior<?> a : all) {
 			for (Hook h : a.type().hooks()) lists.computeIfAbsent(h, k -> new ArrayList<>()).add(a);
-			if (a.has(Hook.MOVEMENT_FLAGS)) flags |= a.movementFlags();
+			if (a.has(Hook.MOVEMENT)) move = move.merge(a.movement());
 		}
 		lists.forEach((h, l) -> byHook.put(h, l.toArray(NONE)));
-		this.movementFlags = flags;
+		this.movement = move;
 	}
 
 	public List<ActiveBehavior<?>> all() {
@@ -43,8 +44,8 @@ public final class ActiveSet {
 		return byHook.containsKey(hook);
 	}
 
-	public int movementFlags() {
-		return movementFlags;
+	public MovementState movement() {
+		return movement;
 	}
 
 	public boolean isEmpty() {

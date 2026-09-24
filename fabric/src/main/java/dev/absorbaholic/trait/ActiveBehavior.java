@@ -8,6 +8,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
@@ -54,7 +56,7 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 
 	public void onDeactivate(ServerPlayer p) { b().onDeactivate(this, p); }
 
-	public int movementFlags() { return b().movementFlags(this); }
+	public MovementState movement() { return b().movement(this); }
 
 	public boolean isImmuneTo(ServerPlayer p, DamageSource s) { return b().isImmuneTo(this, p, s); }
 
@@ -72,9 +74,13 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 
 	public void onJump(ServerPlayer p) { b().onJump(this, p); }
 
-	public void onSneakJump(ServerPlayer p) { b().onSneakJump(this, p); }
+	public boolean onSneakJump(ServerPlayer p) { return b().onSneakJump(this, p); }
 
-	public void onSneakSwing(ServerPlayer p) { b().onSneakSwing(this, p); }
+	public boolean onAirJump(ServerPlayer p) { return b().onAirJump(this, p); }
+
+	public boolean onSneakDoubleTap(ServerPlayer p) { return b().onSneakDoubleTap(this, p); }
+
+	public boolean onSneakSwing(ServerPlayer p, @Nullable Entity target) { return b().onSneakSwing(this, p, target); }
 
 	public void onSneakAttack(ServerPlayer p, Entity target) { b().onSneakAttack(this, p, target); }
 
@@ -84,7 +90,7 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 
 	public boolean wipesOnDeath() { return b().wipesOnDeath(this); }
 
-	public float healFactor(ServerPlayer p, float amount) { return b().healFactor(this, p, amount); }
+	public float healFactor(ServerPlayer p, float amount, boolean natural) { return b().healFactor(this, p, amount, natural); }
 
 	public float exhaustionFactor(ServerPlayer p, float amount) { return b().exhaustionFactor(this, p, amount); }
 
@@ -97,6 +103,10 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 	public double visibilityFactor(ServerPlayer p, @Nullable Entity looker) { return b().visibilityFactor(this, p, looker); }
 
 	public void onBlockBreak(ServerPlayer p, BlockPos pos, BlockState state) { b().onBlockBreak(this, p, pos, state); }
+
+	public void onHitByProjectile(ServerPlayer p, Projectile projectile) { b().onHitByProjectile(this, p, projectile); }
+
+	public FoodProperties modifyFood(ServerPlayer p, ItemStack stack, FoodProperties food) { return b().modifyFood(this, p, stack, food); }
 
 	public void onItemConsumed(ServerPlayer p, ItemStack stack) { b().onItemConsumed(this, p, stack); }
 

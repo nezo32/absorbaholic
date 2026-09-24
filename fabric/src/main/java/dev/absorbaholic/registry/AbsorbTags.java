@@ -10,6 +10,8 @@ import net.minecraft.world.level.block.Block;
 public final class AbsorbTags {
 	public static final TagKey<Block> UNABSORBABLE_BLOCKS = TagKey.create(Registries.BLOCK, Absorbaholic.id("unabsorbable"));
 	public static final TagKey<EntityType<?>> UNABSORBABLE_ENTITIES = TagKey.create(Registries.ENTITY_TYPE, Absorbaholic.id("unabsorbable"));
+	/** Blocks protected near the world floor / Nether roof ({@code AbsorbRules.isProtected}); ships with minecraft:bedrock. */
+	public static final TagKey<Block> PROTECTED_BLOCKS = TagKey.create(Registries.BLOCK, Absorbaholic.id("bedrock_protected"));
 
 	private AbsorbTags() {}
 }

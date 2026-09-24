@@ -16,7 +16,9 @@
 			"dev.absorbaholic.test.BehaviorCGameTests"
 		],
 		"fabric-client-gametest": [
-			"dev.absorbaholic.test.AbsorbClientGameTest"
+			"dev.absorbaholic.test.AbsorbClientGameTest",
+			"dev.absorbaholic.test.AbsorbNotifyClientGameTest",
+			"dev.absorbaholic.test.AbsorbUiClientGameTest"
 		]
 	},
 	"depends": {

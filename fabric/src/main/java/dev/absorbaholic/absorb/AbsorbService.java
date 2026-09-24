@@ -8,7 +8,10 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * WP-ABSORB. The outcome of a completed channel, separated from the channel so gametests can call it directly:
+ * WP-ABSORB. The outcome of a completed channel, separated from the channel so gametests can call it directly
+ * (consumption itself is AbsorbHandler's: BlockRemoval for blocks / fluids; for entities {@code removeAllEffects()}
+ * then {@code discard()}, and for an EnderDragon in a level with {@code getDragonFight() != null} first
+ * {@code dragonFight.setDragonKilled(dragon)} so the exit portal and egg appear, lead decision):
  * refuse if the trait is maxed; evict the oldest entry at the slot cap (announced); roll; apply levels
  * ({@code LevelStacking}); {@code PlayerData.setTraits}; mark discovered ({@code AbsorbWorldSettings.discover});
  * start the cooldown; {@link AbsorbFeedback#absorbed}.

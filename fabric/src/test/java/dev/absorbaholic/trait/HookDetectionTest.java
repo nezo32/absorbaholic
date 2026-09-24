@@ -19,7 +19,9 @@ class HookDetectionTest {
 		}
 
 		@Override
-		public void onSneakJump(ActiveBehavior<Unit> self, ServerPlayer player) {}
+		public boolean onSneakJump(ActiveBehavior<Unit> self, ServerPlayer player) {
+			return false;
+		}
 	}
 
 	@Test

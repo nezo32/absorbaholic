@@ -7,6 +7,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
@@ -44,11 +46,11 @@ public interface Behavior<P> {
 	default void onDeactivate(ActiveBehavior<P> self, ServerPlayer player) {}
 
 	/**
-	 * Client-physics flags this entry grants ({@link MovementFlags}); OR-ed over all active entries and synced to the
-	 * owning client, because players move client side. Read once when the active set is built.
+	 * Client-physics state this entry grants ({@link MovementFlags} + speeds); merged over all active entries and
+	 * synced to the owning client, because players move client side. Read once when the active set is built.
 	 */
-	default int movementFlags(ActiveBehavior<P> self) {
-		return 0;
+	default MovementState movement(ActiveBehavior<P> self) {
+		return MovementState.NONE;
 	}
 
 	/** True = the player takes no damage from {@code source}. Ignored for never-immune damage (see AbsorbCaps). */
@@ -75,14 +77,35 @@ public interface Behavior<P> {
 	/** The player killed {@code victim}. */
 	default void onKill(ActiveBehavior<P> self, ServerPlayer player, LivingEntity victim) {}
 
-	/** Jump key pressed (edge, from the client's input packet; also mid-air), not sneaking. */
+	/** Jump key pressed on the ground, not sneaking (rising edge of the client's input). Not an ability trigger. */
 	default void onJump(ActiveBehavior<P> self, ServerPlayer player) {}
 
-	/** Jump key pressed while sneaking. */
-	default void onSneakJump(ActiveBehavior<P> self, ServerPlayer player) {}
+	// ---- ability triggers (behaviors.md §0.4): return true if the ability FIRED (it was ready and did something).
+	// The engine offers a trigger to entries in trait acquisition order and stops at the first that fires ("one
+	// trigger → one ability"), then charges AbsorbCaps.ABILITY_EXHAUSTION (air jump: AIR_JUMP_EXHAUSTION).
 
-	/** Attack key swung at nothing (air) while sneaking (sent by the client mod). */
-	default void onSneakSwing(ActiveBehavior<P> self, ServerPlayer player) {}
+	/** Trigger {@code sneak_jump}: jump rising edge while sneaking and on the ground. */
+	default boolean onSneakJump(ActiveBehavior<P> self, ServerPlayer player) {
+		return false;
+	}
+
+	/** Trigger {@code air_jump}: jump rising edge while airborne. */
+	default boolean onAirJump(ActiveBehavior<P> self, ServerPlayer player) {
+		return false;
+	}
+
+	/** Trigger {@code sneak_double_tap}: two sneak rising edges within {@code AbsorbCaps.SNEAK_DOUBLE_TAP_TICKS}, on ground. */
+	default boolean onSneakDoubleTap(ActiveBehavior<P> self, ServerPlayer player) {
+		return false;
+	}
+
+	/**
+	 * Trigger {@code sneak_swing}: a swing while sneaking with no block in reach (server-detected from the swing /
+	 * punch packet, so it works on vanilla clients); {@code target} = the entity in reach under the crosshair, if any.
+	 */
+	default boolean onSneakSwing(ActiveBehavior<P> self, ServerPlayer player, @Nullable Entity target) {
+		return false;
+	}
 
 	/** The player attacked {@code target} while sneaking. */
 	default void onSneakAttack(ActiveBehavior<P> self, ServerPlayer player, Entity target) {}
@@ -98,8 +121,8 @@ public interface Behavior<P> {
 		return false;
 	}
 
-	/** Factor on healing. */
-	default float healFactor(ActiveBehavior<P> self, ServerPlayer player, float amount) {
+	/** Factor on healing; {@code natural} = natural regeneration from food (FoodData#tick). */
+	default float healFactor(ActiveBehavior<P> self, ServerPlayer player, float amount, boolean natural) {
 		return 1.0F;
 	}
 
@@ -131,10 +154,18 @@ public interface Behavior<P> {
 	/** The player broke a block. */
 	default void onBlockBreak(ActiveBehavior<P> self, ServerPlayer player, BlockPos pos, BlockState state) {}
 
+	/** The player was hit by {@code projectile} (also zero-damage ones such as snowballs). */
+	default void onHitByProjectile(ActiveBehavior<P> self, ServerPlayer player, Projectile projectile) {}
+
+	/** Replace the food value the player is about to receive from {@code stack}. Return {@code food} for no change. */
+	default FoodProperties modifyFood(ActiveBehavior<P> self, ServerPlayer player, ItemStack stack, FoodProperties food) {
+		return food;
+	}
+
 	/** The player finished eating / drinking {@code stack} (a copy taken before consumption). */
 	default void onItemConsumed(ActiveBehavior<P> self, ServerPlayer player, ItemStack stack) {}
 
-	/** Factor on experience points the player gains (orbs, commands excluded by the engine). */
+	/** Factor on experience points the player gains from experience orbs (never commands / enchanting). */
 	default float experienceFactor(ActiveBehavior<P> self, ServerPlayer player, int amount) {
 		return 1.0F;
 	}

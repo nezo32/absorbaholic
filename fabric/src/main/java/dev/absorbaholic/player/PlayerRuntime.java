@@ -6,6 +6,7 @@ import java.util.Map;
 import dev.absorbaholic.absorb.AbsorbChannel;
 import dev.absorbaholic.core.DamageGate;
 import dev.absorbaholic.trait.ActiveSet;
+import dev.absorbaholic.trait.MovementState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Input;
 import org.jspecify.annotations.Nullable;
@@ -29,8 +30,14 @@ public final class PlayerRuntime {
 	public final DamageGate damageGate = new DamageGate();
 	/** Per-ability cooldown end (game time), keyed by behavior type id + source id; see TraitEngine. */
 	public final Map<Identifier, Long> abilityCooldowns = new HashMap<>();
-	/** Last synced movement flags and aura (to send only changes). */
-	public int sentMovementFlags = -1;
+	/** Game time of the previous sneak rising edge (sneak_double_tap). */
+	public long lastSneakEdge = Long.MIN_VALUE / 2;
+	/** Effects our status_effect behaviors applied, by effect id → owning source id (never modified by effect_modifier). */
+	public final Map<Identifier, Identifier> ownedEffects = new HashMap<>();
+	/** Free per-behavior scratch state, keyed like abilityCooldowns (charges, timers, counters). */
+	public final Map<Identifier, Object> behaviorState = new HashMap<>();
+	/** Last synced movement state and aura (to send only changes); null = never sent. */
+	public @Nullable MovementState sentMovement;
 	public int sentAuraColor = -1;
 	public float sentAuraStrength = -1.0F;
 

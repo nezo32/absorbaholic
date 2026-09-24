@@ -122,7 +122,6 @@ class LangFileTest {
 	}
 
 	/** Every trait / weakness key of every shipped source JSON has a name and a description in both languages. */
-	@Disabled("LEAD: enable once the designer's lang fragments are merged into en_us / ru_ru")
 	@Test
 	void everySourceKeyHasLang() throws IOException {
 		if (!Files.isDirectory(SOURCES)) return;

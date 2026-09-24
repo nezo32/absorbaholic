@@ -16,10 +16,9 @@ public final class AbsorbNetworking {
 		PayloadTypeRegistry.clientboundPlay().register(TraitsPayload.TYPE, TraitsPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(AbsorbedPayload.TYPE, AbsorbedPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(ChannelStatePayload.TYPE, ChannelStatePayload.CODEC);
-		PayloadTypeRegistry.clientboundPlay().register(MovementFlagsPayload.TYPE, MovementFlagsPayload.CODEC);
+		PayloadTypeRegistry.clientboundPlay().register(MovementPayload.TYPE, MovementPayload.CODEC);
 		PayloadTypeRegistry.clientboundPlay().register(AuraPayload.TYPE, AuraPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(AbsorbStartPayload.TYPE, AbsorbStartPayload.CODEC);
 		PayloadTypeRegistry.serverboundPlay().register(AbsorbCancelPayload.TYPE, AbsorbCancelPayload.CODEC);
-		PayloadTypeRegistry.serverboundPlay().register(ActionPayload.TYPE, ActionPayload.CODEC);
 	}
 }

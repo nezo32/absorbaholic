@@ -1,6 +1,7 @@
 package dev.absorbaholic.mixin;
 
 import dev.absorbaholic.trait.MovementFlagsHolder;
+import dev.absorbaholic.trait.MovementState;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -12,8 +13,6 @@ import org.spongepowered.asm.mixin.Unique;
  * <li>{@code causeFoodExhaustion(F)V} HEAD {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyExhaustion};</li>
  * <li>{@code causeFallDamage(DFLnet/minecraft/world/damagesource/DamageSource;)Z} HEAD → {@code TraitEngine.onLand}
  *     for a ServerPlayer.</li>
- * <li>{@code giveExperiencePoints(I)V} HEAD {@code @ModifyVariable(argsOnly)}, positive amounts →
- *     {@code TraitEngine.modifyExperience}.</li>
  * </ul>
  * Gliding is NOT a mixin: {@code EntityElytraEvents.CUSTOM} (registered by TraitEngine in common init, both sides)
  * returns true for {@code MovementFlags.GLIDE}; a canGlide mixin would crash vanilla's elytra-damage branch.
@@ -21,15 +20,15 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(Player.class)
 public abstract class PlayerMixin implements MovementFlagsHolder {
 	@Unique
-	private int absorbaholic$movementFlags;
+	private MovementState absorbaholic$movement = MovementState.NONE;
 
 	@Override
-	public int absorbaholic$movementFlags() {
-		return absorbaholic$movementFlags;
+	public MovementState absorbaholic$movement() {
+		return absorbaholic$movement;
 	}
 
 	@Override
-	public void absorbaholic$setMovementFlags(int flags) {
-		absorbaholic$movementFlags = flags;
+	public void absorbaholic$setMovement(MovementState state) {
+		absorbaholic$movement = state == null ? MovementState.NONE : state;
 	}
 }

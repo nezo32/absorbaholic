@@ -24,6 +24,11 @@ public final class AbsorbCaps {
 	public static final float MOB_HEALTH_THRESHOLD = 0.25F;
 	/** Extra reach tolerance (blocks) over the player's interaction range while channeling (lag / movement). */
 	public static final double CHANNEL_RANGE_TOLERANCE = 1.0;
+	/**
+	 * World protection: {@code #absorbaholic:bedrock_protected} blocks (bedrock) cannot be absorbed in the bottom this-many
+	 * layers of a dimension, nor at / above {@code minY + logicalHeight - this} in a dimension with a ceiling (Nether roof).
+	 */
+	public static final int PROTECTED_LAYERS = 5;
 
 	// ---- rolls -------------------------------------------------------------------------------------------------
 
@@ -59,24 +64,24 @@ public final class AbsorbCaps {
 	public static final float DAMAGE_TAKEN_FLOOR = 0.25F;
 	/** Combined incoming-damage multiplier from weaknesses never exceeds this (the extra then goes through the gate). */
 	public static final float DAMAGE_TAKEN_WEAKNESS_CEILING = 3.0F;
-	/** Combined outgoing (dealt) damage multiplier range from traits and weaknesses. */
-	public static final float DAMAGE_DEALT_MIN = 0.25F;
-	public static final float DAMAGE_DEALT_MAX = 3.0F;
-	/** Combined healing multiplier range. */
+	/** Combined outgoing (dealt) damage multiplier range (behaviors.md damage_dealt_multiplier). */
+	public static final float DAMAGE_DEALT_MIN = 0.5F;
+	public static final float DAMAGE_DEALT_MAX = 2.0F;
+	/** Combined healing multiplier range (heal_multiplier). */
 	public static final float HEAL_FACTOR_MIN = 0.25F;
-	public static final float HEAL_FACTOR_MAX = 3.0F;
-	/** Combined food exhaustion multiplier range. */
-	public static final float EXHAUSTION_FACTOR_MIN = 0.0F;
-	public static final float EXHAUSTION_FACTOR_MAX = 4.0F;
+	public static final float HEAL_FACTOR_MAX = 2.0F;
+	/** Combined food exhaustion multiplier range (hunger_drain). */
+	public static final float EXHAUSTION_FACTOR_MIN = 0.25F;
+	public static final float EXHAUSTION_FACTOR_MAX = 5.0F;
 	/** Combined mob detection (visibility) multiplier range: &gt; 1 = mobs notice the player from further away. */
 	public static final double VISIBILITY_FACTOR_MIN = 0.25;
 	public static final double VISIBILITY_FACTOR_MAX = 3.0;
-	/** Combined experience gain multiplier range. */
-	public static final float EXPERIENCE_FACTOR_MIN = 0.0F;
-	public static final float EXPERIENCE_FACTOR_MAX = 3.0F;
-	/** Combined item durability-loss multiplier range. */
-	public static final float DURABILITY_FACTOR_MIN = 0.0F;
-	public static final float DURABILITY_FACTOR_MAX = 4.0F;
+	/** Combined experience-orb multiplier range (xp_multiplier). */
+	public static final float EXPERIENCE_FACTOR_MIN = 0.25F;
+	public static final float EXPERIENCE_FACTOR_MAX = 2.5F;
+	/** Combined item durability-loss multiplier range (durability_multiplier). */
+	public static final float DURABILITY_FACTOR_MIN = 0.5F;
+	public static final float DURABILITY_FACTOR_MAX = 3.0F;
 	/** Max amplifier (0-based) an effect may reach after a weakness amplifies it. */
 	public static final int EFFECT_AMPLIFIER_MAX = 4;
 
@@ -86,6 +91,12 @@ public final class AbsorbCaps {
 	 */
 	public static final List<String> NEVER_IMMUNE_DAMAGE_TYPES = List.of(
 			"minecraft:generic_kill", "minecraft:out_of_world", "minecraft:generic");
+	/** Damage type tags a {@code damage_multiplier} of 0 (immunity) may name (behaviors.md). */
+	public static final List<String> IMMUNITY_TAGS = List.of(
+			"minecraft:is_fire", "minecraft:is_fall", "minecraft:is_drowning", "minecraft:is_freezing");
+	/** Damage type ids a {@code damage_multiplier} of 0 (immunity) may name. */
+	public static final List<String> IMMUNITY_TYPES = List.of(
+			"minecraft:hot_floor", "minecraft:cactus", "minecraft:sweet_berry_bush", "minecraft:lightning_bolt", "minecraft:ender_pearl");
 
 	// ---- active abilities --------------------------------------------------------------------------------------
 
@@ -95,10 +106,46 @@ public final class AbsorbCaps {
 	public static final double ABILITY_MAX_RANGE = 24.0;
 	public static final int ABILITY_MAX_TARGETS = 8;
 	public static final double TELEPORT_MAX_DISTANCE = 16.0;
+	public static final double SONIC_BOOM_MAX_RANGE = 20.0;
+	public static final int EVOKER_FANGS_MAX = 16;
 	/** Launch / dash / flight-burst velocity cap (blocks per tick). */
 	public static final double ABILITY_MAX_VELOCITY = 1.6;
-	/** Explosion power cap of detonate / fireball style abilities (TNT is 4). */
+	/** Explosion power cap of detonate style abilities (TNT is 4); fireballs have their own lower cap. */
 	public static final float ABILITY_MAX_EXPLOSION_POWER = 3.0F;
+	public static final float FIREBALL_MAX_EXPLOSION_POWER = 2.0F;
+	/** Food exhaustion charged per fired ability (behaviors.md §0.4); air jump costs less. */
+	public static final float ABILITY_EXHAUSTION = 1.0F;
+	public static final float AIR_JUMP_EXHAUSTION = 0.5F;
+	/** Two sneak rising edges within this many ticks = sneak_double_tap. */
+	public static final int SNEAK_DOUBLE_TAP_TICKS = 8;
+	/** Flight: exhaustion per flying tick; slow falling granted when flight is lost mid-air. */
+	public static final float FLIGHT_EXHAUSTION_PER_TICK = 0.01F;
+	public static final int FLIGHT_LOSS_SLOW_FALLING_TICKS = 200;
+
+	// ---- behavior-specific caps (behaviors.md) -----------------------------------------------------------------
+
+	/** Tick behaviors evaluate their condition at most this often (cached in between). */
+	public static final int CONDITION_CACHE_TICKS = 10;
+	/** Max {@code condition_radius} of near_entity. */
+	public static final double CONDITION_MAX_RADIUS = 16.0;
+	/** Mob-affecting scans never look further than this. */
+	public static final double MOB_SCAN_MAX_RADIUS = 64.0;
+	/** detection_range &gt; 1: provoke radius cap. */
+	public static final double DETECTION_MAX_RADIUS = 48.0;
+	public static final double AURA_MAX_RADIUS = 16.0;
+	public static final double ITEM_MAGNET_MAX_RADIUS = 10.0;
+	public static final double ITEM_MAGNET_PULL = 0.25;
+	public static final int FROST_WALK_MAX_RADIUS = 5;
+	/** sink_in_water terminal downward velocity (blocks per tick, negative). */
+	public static final double SINK_MAX_FALL_VELOCITY = -0.3;
+	/** retaliate: melee range and per-attacker cooldown. */
+	public static final double RETALIATE_MAX_RANGE = 6.0;
+	public static final int RETALIATE_COOLDOWN_TICKS = 10;
+	/** kill_reward: victims need at least this max health; at most one reward per this many ticks. */
+	public static final float KILL_REWARD_MIN_VICTIM_MAX_HEALTH = 4.0F;
+	public static final int KILL_REWARD_COOLDOWN_TICKS = 10;
+	/** struck_by: at most once per this many ticks. */
+	public static final int STRUCK_BY_COOLDOWN_TICKS = 10;
 
 	// ---- behaviors in general ----------------------------------------------------------------------------------
 

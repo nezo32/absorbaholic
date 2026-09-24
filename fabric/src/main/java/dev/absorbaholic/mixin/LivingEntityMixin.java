@@ -9,11 +9,12 @@ import org.spongepowered.asm.mixin.Mixin;
  * <li>{@code hurtServer} HEAD {@code @ModifyVariable(argsOnly, float)}: victim ServerPlayer →
  *     {@code TraitEngine.modifyIncomingDamage} (trait floor + weakness extra through the gate); attacker
  *     ({@code source.getEntity()}) ServerPlayer → {@code TraitEngine.modifyOutgoingDamage}.</li>
- * <li>{@code heal(F)V} HEAD {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyHeal}.</li>
+ * <li>{@code heal(F)V} HEAD {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyHeal(p, amount, natural)}.</li>
  * <li>{@code addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z} HEAD
  *     {@code @ModifyVariable(argsOnly)} → {@code TraitEngine.modifyEffect} (deny is ServerMobEffectEvents.ALLOW_ADD).</li>
  * <li>{@code canStandOnFluid(Lnet/minecraft/world/level/material/FluidState;)Z} HEAD cancellable →
- *     WALK_ON_WATER / WALK_ON_LAVA flags (not while sneaking). Both sides (client physics).</li>
+ *     WALK_ON_WATER / WALK_ON_LAVA flags (not while sneaking). Both sides (client physics). SINK_IN_WATER: WP-ENGINE
+ *     adds the travel-in-fluid tweak (vy = max(vy - sinkSpeed, SINK_MAX_FALL_VELOCITY), no swim-up) in this mixin.</li>
  * <li>{@code onClimbable()Z} HEAD cancellable → true for a Player with CLIMB_WALLS and {@code horizontalCollision}.
  *     Both sides.</li>
  * <li>{@code getVisibilityPercent} by NAME ONLY (26.2: (Entity), 26.3: (ServerLevel, Entity)), {@code @At("RETURN")},

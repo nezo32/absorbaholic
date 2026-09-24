@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
  * (living entity from {@code mc.hitResult}, else {@code player.pick(blockInteractionRange, 1, true)} incl. fluids).
  * END_CLIENT_TICK: while the use key is held and intercepting, send {@code AbsorbStartPayload(target)} every tick
  * (heartbeat); on release / target loss / screen open send {@code AbsorbCancelPayload} once.
- * Sneak-swing: MinecraftMixin at {@code startAttack} HEAD, hitResult MISS + sneaking + mode ON → {@code ActionPayload}.
+ * {@code AbsorbRules.isProtected} targets are not intercepted (vanilla use proceeds; the hint says "protected").
  */
 public final class AbsorbInput {
 	private AbsorbInput() {}
