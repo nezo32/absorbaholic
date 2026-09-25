@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:cow"],
+  "color": "#443626",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "milk_drinker",
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "category": "harmful",
+        "mode": "duration",
+        "value": [0.85, 0.7, 0.55]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "herbivore",
+    "behaviors": [
+      {
+        "type": "absorbaholic:food_modifier",
+        "items": ["#minecraft:meat"],
+        "nutrition": [0.8, 0.6, 0.4],
+        "saturation": [0.8, 0.6, 0.4]
+      }
+    ]
+  }
+}

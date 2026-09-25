@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:cat"],
+  "color": "#EFB86A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "cat_presence",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:creeper", "minecraft:phantom"],
+        "attitude": "flee",
+        "radius": [6, 10, 14]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "hates_water",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "in_water"
+      }
+    ]
+  }
+}

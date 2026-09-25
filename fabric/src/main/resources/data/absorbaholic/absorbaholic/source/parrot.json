@@ -1,0 +1,40 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:parrot"],
+  "color": "#0DA70B",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "flutter",
+    "attributes": [
+      {
+        "attribute": "minecraft:gravity",
+        "operation": "add_multiplied_base",
+        "amount": [-0.1, -0.2, -0.3]
+      },
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [-0.2, -0.4, -0.6]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "chatterbox",
+    "behaviors": [
+      {
+        "type": "absorbaholic:detection_range",
+        "multiplier": [1.2, 1.4, 1.6]
+      },
+      {
+        "type": "absorbaholic:food_modifier",
+        "items": ["#minecraft:parrot_poisonous_food"],
+        "nutrition": [1.0, 1.0, 1.0],
+        "saturation": [1.0, 1.0, 1.0],
+        "effect": "minecraft:poison",
+        "amplifier": [0, 0, 1],
+        "duration": [100, 160, 200]
+      }
+    ]
+  }
+}

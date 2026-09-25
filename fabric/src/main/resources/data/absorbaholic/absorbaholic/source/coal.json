@@ -1,0 +1,28 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.coal",
+  "targets": ["#minecraft:coal_ores", "minecraft:coal_block"],
+  "icon": "minecraft:coal_ore",
+  "color": "#2E2E2E",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "slow_burner",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "multiplier": [0.9, 0.8, 0.7]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sooty_lungs",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_drowning",
+        "multiplier": [1.5, 2.0, 2.5]
+      }
+    ]
+  }
+}

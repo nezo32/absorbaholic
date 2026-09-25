@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:silverfish"],
+  "color": "#6E6E6E",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "stone_burrower",
+    "attributes": [
+      {
+        "attribute": "minecraft:mining_efficiency",
+        "operation": "add_value",
+        "amount": [1, 3, 5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "squishable",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-1, -2, -3]
+      }
+    ]
+  }
+}

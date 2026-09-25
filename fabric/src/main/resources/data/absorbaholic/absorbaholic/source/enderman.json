@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:enderman"],
+  "color": "#161616",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "blink",
+    "behaviors": [
+      {
+        "type": "absorbaholic:teleport",
+        "trigger": "sneak_jump",
+        "mode": "look",
+        "range": [8, 12, 16],
+        "cooldown": [100, 80, 60]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "ender_outcast",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "wet",
+        "damage": [0.5, 1.0, 1.5]
+      },
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:enderman"],
+        "attitude": "hostile",
+        "radius": [16, 32, 48]
+      }
+    ]
+  }
+}

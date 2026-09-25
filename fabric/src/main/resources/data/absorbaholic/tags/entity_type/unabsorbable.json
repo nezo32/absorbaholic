@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:player",
+    "minecraft:armor_stand",
+    "minecraft:mannequin",
+    "minecraft:giant",
+    "minecraft:illusioner"
+  ]
+}

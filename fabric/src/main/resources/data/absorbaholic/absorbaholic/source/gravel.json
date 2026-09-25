@@ -1,0 +1,29 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.gravel",
+  "targets": ["minecraft:gravel", "minecraft:suspicious_gravel"],
+  "icon": "minecraft:gravel",
+  "color": "#857F7E",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "flint_finder",
+    "attributes": [
+      {
+        "attribute": "minecraft:luck",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "pulled_down",
+    "attributes": [
+      {
+        "attribute": "minecraft:gravity",
+        "operation": "add_multiplied_base",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ]
+  }
+}

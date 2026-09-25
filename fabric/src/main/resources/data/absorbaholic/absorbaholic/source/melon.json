@@ -1,0 +1,29 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.melon",
+  "targets": ["minecraft:melon", "minecraft:melon_stem", "minecraft:attached_melon_stem"],
+  "icon": "minecraft:melon",
+  "color": "#71A42E",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "juicy",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_over_time",
+        "amount": [0.25, 0.5, 0.75],
+        "interval": 100
+      }
+    ]
+  },
+  "weakness": {
+    "key": "squishy",
+    "attributes": [
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [0.2, 0.4, 0.6]
+      }
+    ]
+  }
+}

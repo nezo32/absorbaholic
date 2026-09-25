@@ -1,0 +1,35 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.gold",
+  "targets": [
+    "#minecraft:gold_ores",
+    "minecraft:gold_block",
+    "minecraft:raw_gold_block",
+    "minecraft:gilded_blackstone",
+    "minecraft:light_weighted_pressure_plate",
+    "minecraft:bell"
+  ],
+  "icon": "minecraft:gold_ore",
+  "color": "#FCEE4B",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "midas_luck",
+    "attributes": [
+      {
+        "attribute": "minecraft:luck",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "soft_metal",
+    "behaviors": [
+      {
+        "type": "absorbaholic:durability_multiplier",
+        "multiplier": [1.25, 1.5, 2.0]
+      }
+    ]
+  }
+}

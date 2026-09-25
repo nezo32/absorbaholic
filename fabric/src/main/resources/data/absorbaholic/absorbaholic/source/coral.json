@@ -1,0 +1,71 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.coral",
+  "targets": [
+    "minecraft:brain_coral",
+    "minecraft:brain_coral_block",
+    "minecraft:brain_coral_fan",
+    "minecraft:brain_coral_wall_fan",
+    "minecraft:bubble_coral",
+    "minecraft:bubble_coral_block",
+    "minecraft:bubble_coral_fan",
+    "minecraft:bubble_coral_wall_fan",
+    "minecraft:dead_brain_coral",
+    "minecraft:dead_brain_coral_block",
+    "minecraft:dead_brain_coral_fan",
+    "minecraft:dead_brain_coral_wall_fan",
+    "minecraft:dead_bubble_coral",
+    "minecraft:dead_bubble_coral_block",
+    "minecraft:dead_bubble_coral_fan",
+    "minecraft:dead_bubble_coral_wall_fan",
+    "minecraft:dead_fire_coral",
+    "minecraft:dead_fire_coral_block",
+    "minecraft:dead_fire_coral_fan",
+    "minecraft:dead_fire_coral_wall_fan",
+    "minecraft:dead_horn_coral",
+    "minecraft:dead_horn_coral_block",
+    "minecraft:dead_horn_coral_fan",
+    "minecraft:dead_horn_coral_wall_fan",
+    "minecraft:dead_tube_coral",
+    "minecraft:dead_tube_coral_block",
+    "minecraft:dead_tube_coral_fan",
+    "minecraft:dead_tube_coral_wall_fan",
+    "minecraft:fire_coral",
+    "minecraft:fire_coral_block",
+    "minecraft:fire_coral_fan",
+    "minecraft:fire_coral_wall_fan",
+    "minecraft:horn_coral",
+    "minecraft:horn_coral_block",
+    "minecraft:horn_coral_fan",
+    "minecraft:horn_coral_wall_fan",
+    "minecraft:tube_coral",
+    "minecraft:tube_coral_block",
+    "minecraft:tube_coral_fan",
+    "minecraft:tube_coral_wall_fan"
+  ],
+  "icon": "minecraft:brain_coral_block",
+  "color": "#F46FA5",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "reef_rest",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_over_time",
+        "condition": "in_water",
+        "amount": [0.5, 1.0, 1.5],
+        "interval": 60
+      }
+    ]
+  },
+  "weakness": {
+    "key": "bleaching",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "condition": ["in_sunlight", "dry"],
+        "multiplier": [1.3, 1.6, 2.0]
+      }
+    ]
+  }
+}

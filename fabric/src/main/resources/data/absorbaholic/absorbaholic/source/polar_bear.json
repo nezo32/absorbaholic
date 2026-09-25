@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:polar_bear"],
+  "color": "#F2F2F2",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "arctic_fur",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [1, 1.5, 2]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_freezing",
+        "multiplier": [0.5, 0.25, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "overheating",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "hot"
+      }
+    ]
+  }
+}

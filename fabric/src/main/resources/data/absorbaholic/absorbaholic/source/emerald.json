@@ -1,0 +1,30 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.emerald",
+  "targets": ["#minecraft:emerald_ores", "minecraft:emerald_block"],
+  "icon": "minecraft:emerald_ore",
+  "color": "#17DD62",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "haggler",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:hero_of_the_village",
+        "amplifier": [0, 1, 2]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "wanted_poster",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:iron_golem"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

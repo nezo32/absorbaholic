@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:wolf"],
+  "color": "#D7D3D2",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "pack_hunter",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [1, 1.5, 2]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "bone_rivalry",
+    "behaviors": [
+      {
+        "type": "absorbaholic:detection_range",
+        "entities": ["#minecraft:skeletons"],
+        "multiplier": [1.3, 1.6, 2.0]
+      }
+    ]
+  }
+}

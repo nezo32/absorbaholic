@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    # reusable-*.yml mirror nezo32/enchantaholic byte-for-byte (scripts/check-reusable-mirror.sh): bump them upstream
+    exclude-paths: [".github/workflows/reusable-*.yml"]
+    groups:
+      actions: { patterns: ["*"] }
+  - package-ecosystem: gradle
+    directory: /fabric
+    schedule: { interval: weekly }

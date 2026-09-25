@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:shulker"],
+  "color": "#946794",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "shulker_shot",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "shulker_bullet",
+        "count": [1, 1, 1],
+        "cooldown": [80, 60, 40]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "shell_bound",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.08, -0.14, -0.2]
+      }
+    ]
+  }
+}

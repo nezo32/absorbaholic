@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:stray"],
+  "color": "#5F7A7A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "frost_arrows",
+    "behaviors": [
+      {
+        "type": "absorbaholic:attack_effect",
+        "damage_tag": "minecraft:is_projectile",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "duration": [60, 80, 100],
+        "chance": [1.0, 1.0, 1.0]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_freezing",
+        "multiplier": [0.5, 0.25, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "melting",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "damage": [0.25, 0.5, 0.75],
+        "condition": "hot"
+      }
+    ]
+  }
+}

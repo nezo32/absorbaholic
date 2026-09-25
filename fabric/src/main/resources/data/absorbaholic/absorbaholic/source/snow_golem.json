@@ -1,0 +1,34 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:snow_golem"],
+  "color": "#FFFFFF",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "snowballer",
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "snowball",
+        "count": [1, 2, 3],
+        "damage": [1, 1.5, 2],
+        "cooldown": [20, 15, 10]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_freezing",
+        "multiplier": [0.0, 0.0, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "melting",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "damage": [0.25, 0.5, 0.75],
+        "condition_any": ["hot", "wet"]
+      }
+    ]
+  }
+}

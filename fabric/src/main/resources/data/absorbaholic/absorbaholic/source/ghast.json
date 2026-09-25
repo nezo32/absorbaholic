@@ -1,0 +1,29 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:ghast"],
+  "color": "#F0F0F0",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "ghast_fireball",
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "fireball",
+        "count": [1, 1, 1],
+        "explosion_power": [1, 1, 2],
+        "cooldown": [100, 80, 60]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "paper_thin",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_projectile",
+        "multiplier": [1.25, 1.5, 2.0]
+      }
+    ]
+  }
+}

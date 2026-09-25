@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:slime"],
+  "color": "#6FBF5B",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "gelatinous",
+    "attributes": [
+      {
+        "attribute": "minecraft:fall_damage_multiplier",
+        "operation": "add_multiplied_base",
+        "amount": [-0.25, -0.5, -0.75]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "jiggly",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [-0.5, -1.0, -1.5]
+      }
+    ]
+  }
+}

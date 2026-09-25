@@ -1,0 +1,46 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.masonry",
+  "targets": [
+    "#minecraft:terracotta",
+    "#minecraft:glazed_terracotta",
+    "#minecraft:concrete",
+    "#minecraft:concrete_powders",
+    "#minecraft:concrete_stairs",
+    "#minecraft:concrete_slabs",
+    "minecraft:bricks",
+    "minecraft:brick_slab",
+    "minecraft:brick_stairs",
+    "minecraft:brick_wall",
+    "minecraft:decorated_pot",
+    "minecraft:flower_pot"
+  ],
+  "icon": "minecraft:terracotta",
+  "color": "#985E43",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "reinforced",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor_toughness",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      },
+      {
+        "attribute": "minecraft:explosion_knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "concrete_shoes",
+    "behaviors": [
+      {
+        "type": "absorbaholic:sink_in_water",
+        "speed": [0.015, 0.025, 0.035]
+      }
+    ]
+  }
+}

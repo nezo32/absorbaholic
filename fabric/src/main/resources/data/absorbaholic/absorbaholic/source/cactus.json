@@ -1,0 +1,34 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.cactus",
+  "targets": ["minecraft:cactus", "minecraft:cactus_flower"],
+  "icon": "minecraft:cactus",
+  "color": "#5A8A2D",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "prickly",
+    "behaviors": [
+      {
+        "type": "absorbaholic:retaliate",
+        "damage": [1.0, 1.5, 2.0],
+        "chance": [0.5, 0.75, 1.0]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_types": ["minecraft:cactus", "minecraft:sweet_berry_bush"],
+        "multiplier": [0.0, 0.0, 0.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "slow_healer",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "natural",
+        "multiplier": [0.75, 0.6, 0.45]
+      }
+    ]
+  }
+}

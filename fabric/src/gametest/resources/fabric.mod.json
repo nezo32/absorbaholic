@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "absorbaholic-gametest",
+	"version": "1.0.0",
+	"name": "Absorbaholic GameTests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"dev.absorbaholic.test.AbsorbRegistryGameTests",
+			"dev.absorbaholic.test.AbsorbInteractionGameTests",
+			"dev.absorbaholic.test.AbsorbPersistenceGameTests",
+			"dev.absorbaholic.test.AbsorbCommandGameTests",
+			"dev.absorbaholic.test.TraitEngineGameTests",
+			"dev.absorbaholic.test.BehaviorAGameTests",
+			"dev.absorbaholic.test.BehaviorBGameTests",
+			"dev.absorbaholic.test.BehaviorCGameTests",
+			"dev.absorbaholic.test.AcceptanceGameTests",
+			"dev.absorbaholic.test.EngineFixGameTests"
+		],
+		"fabric-client-gametest": [
+			"dev.absorbaholic.test.AbsorbClientGameTest",
+			"dev.absorbaholic.test.AbsorbNotifyClientGameTest",
+			"dev.absorbaholic.test.AbsorbUiClientGameTest"
+		]
+	},
+	"depends": {
+		"absorbaholic": "*"
+	}
+}

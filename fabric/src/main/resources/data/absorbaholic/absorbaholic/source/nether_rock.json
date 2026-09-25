@@ -1,0 +1,63 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.nether_rock",
+  "targets": [
+    "minecraft:netherrack",
+    "#minecraft:nylium",
+    "#minecraft:wart_blocks",
+    "minecraft:basalt",
+    "minecraft:blackstone",
+    "minecraft:blackstone_slab",
+    "minecraft:blackstone_stairs",
+    "minecraft:blackstone_wall",
+    "minecraft:chiseled_nether_bricks",
+    "minecraft:chiseled_polished_blackstone",
+    "minecraft:cracked_nether_bricks",
+    "minecraft:cracked_polished_blackstone_bricks",
+    "minecraft:nether_brick_fence",
+    "minecraft:nether_brick_slab",
+    "minecraft:nether_brick_stairs",
+    "minecraft:nether_brick_wall",
+    "minecraft:nether_bricks",
+    "minecraft:polished_basalt",
+    "minecraft:polished_blackstone",
+    "minecraft:polished_blackstone_brick_slab",
+    "minecraft:polished_blackstone_brick_stairs",
+    "minecraft:polished_blackstone_brick_wall",
+    "minecraft:polished_blackstone_bricks",
+    "minecraft:polished_blackstone_button",
+    "minecraft:polished_blackstone_pressure_plate",
+    "minecraft:polished_blackstone_slab",
+    "minecraft:polished_blackstone_stairs",
+    "minecraft:polished_blackstone_wall",
+    "minecraft:red_nether_brick_slab",
+    "minecraft:red_nether_brick_stairs",
+    "minecraft:red_nether_brick_wall",
+    "minecraft:red_nether_bricks",
+    "minecraft:smooth_basalt"
+  ],
+  "icon": "minecraft:netherrack",
+  "color": "#6F3534",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "hellforged",
+    "attributes": [
+      {
+        "attribute": "minecraft:burning_time",
+        "operation": "add_multiplied_base",
+        "amount": [-0.25, -0.5, -0.75]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "rain_hater",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "in_rain",
+        "damage": [0.25, 0.5, 0.75]
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "entity",
+  "name": "absorbaholic.source.zombie",
+  "targets": ["minecraft:zombie", "minecraft:zombie_villager"],
+  "icon": "minecraft:zombie_spawn_egg",
+  "color": "#52793B",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "undead_vigor",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sunburn",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "in_sunlight",
+        "ignite_seconds": [2, 4, 6],
+        "helmet_blocks": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.sponge",
+  "targets": ["minecraft:sponge", "minecraft:wet_sponge"],
+  "icon": "minecraft:sponge",
+  "color": "#C3C04A",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "absorbent",
+    "attributes": [
+      {
+        "attribute": "minecraft:oxygen_bonus",
+        "operation": "add_value",
+        "amount": [2, 5, 8]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "waterlogged",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "condition": "wet",
+        "multiplier": [2.0, 3.0, 4.0]
+      }
+    ]
+  }
+}

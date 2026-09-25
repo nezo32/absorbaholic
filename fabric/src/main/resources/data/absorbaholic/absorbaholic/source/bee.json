@@ -1,0 +1,32 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:bee"],
+  "color": "#EDC343",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "buzz_hover",
+    "behaviors": [
+      {
+        "type": "absorbaholic:air_jump",
+        "charges": [1, 2, 3],
+        "velocity": [0.5, 0.55, 0.6],
+        "cooldown": 8
+      }
+    ]
+  },
+  "weakness": {
+    "key": "nectar_addict",
+    "behaviors": [
+      {
+        "type": "absorbaholic:hunger_drain",
+        "multiplier": [1.3, 1.6, 2.0]
+      },
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "starving",
+        "damage": [1.0, 2.0, 3.0]
+      }
+    ]
+  }
+}

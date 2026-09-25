@@ -1,0 +1,42 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:elder_guardian"],
+  "color": "#CECDC0",
+  "tier": "legendary",
+  "max_level": 3,
+  "trait": {
+    "key": "lord_of_the_deep",
+    "attributes": [
+      {
+        "attribute": "minecraft:water_movement_efficiency",
+        "operation": "add_value",
+        "amount": [0.3, 0.6, 1.0]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:conduit_power",
+        "amplifier": [0, 1, 2],
+        "condition": "in_water"
+      },
+      {
+        "type": "absorbaholic:retaliate",
+        "damage": [2, 3, 4],
+        "chance": [1.0, 1.0, 1.0],
+        "condition": "in_water"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "monument_bound",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:mining_fatigue",
+        "amplifier": [0, 1, 2],
+        "condition": "!in_water"
+      }
+    ]
+  }
+}

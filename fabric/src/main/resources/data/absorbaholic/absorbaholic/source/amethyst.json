@@ -1,0 +1,36 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.amethyst",
+  "targets": [
+    "minecraft:amethyst_block",
+    "minecraft:budding_amethyst",
+    "minecraft:amethyst_cluster",
+    "minecraft:small_amethyst_bud",
+    "minecraft:medium_amethyst_bud",
+    "minecraft:large_amethyst_bud",
+    "minecraft:calcite"
+  ],
+  "icon": "minecraft:amethyst_block",
+  "color": "#9A5CC6",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "long_reach",
+    "attributes": [
+      {
+        "attribute": "minecraft:entity_interaction_range",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "chiming_steps",
+    "behaviors": [
+      {
+        "type": "absorbaholic:detection_range",
+        "multiplier": [1.2, 1.4, 1.7]
+      }
+    ]
+  }
+}

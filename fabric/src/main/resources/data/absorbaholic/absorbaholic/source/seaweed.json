@@ -1,0 +1,45 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.seaweed",
+  "targets": [
+    "minecraft:kelp",
+    "minecraft:kelp_plant",
+    "minecraft:dried_kelp_block",
+    "minecraft:seagrass",
+    "minecraft:tall_seagrass",
+    "minecraft:sea_pickle",
+    "minecraft:lily_pad"
+  ],
+  "icon": "minecraft:kelp",
+  "color": "#3F7A2B",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "sea_eyes",
+    "attributes": [
+      {
+        "attribute": "minecraft:oxygen_bonus",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 2.0]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:night_vision",
+        "amplifier": [0, 0, 0],
+        "condition": "underwater"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "dry_fuel",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [1.2, 1.4, 1.6]
+      }
+    ]
+  }
+}

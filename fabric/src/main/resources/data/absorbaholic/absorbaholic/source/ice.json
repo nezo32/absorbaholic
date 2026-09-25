@@ -1,0 +1,30 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.ice",
+  "targets": ["#minecraft:ice"],
+  "icon": "minecraft:ice",
+  "color": "#91B7FD",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "frost_walker",
+    "behaviors": [
+      {
+        "type": "absorbaholic:walk_on_fluid",
+        "fluid": "water",
+        "mode": "frost",
+        "radius": [2, 3, 4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "melts_in_flames",
+    "attributes": [
+      {
+        "attribute": "minecraft:burning_time",
+        "operation": "add_multiplied_base",
+        "amount": [1.0, 1.5, 2.0]
+      }
+    ]
+  }
+}

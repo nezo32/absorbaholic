@@ -1,0 +1,47 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.harvest",
+  "targets": [
+    "minecraft:wheat",
+    "minecraft:carrots",
+    "minecraft:potatoes",
+    "minecraft:beetroots",
+    "minecraft:torchflower_crop",
+    "minecraft:pitcher_crop",
+    "minecraft:hay_block",
+    "minecraft:sugar_cane",
+    "minecraft:bamboo",
+    "minecraft:bamboo_sapling",
+    "minecraft:cocoa",
+    "minecraft:sweet_berry_bush",
+    "minecraft:nether_wart",
+    "minecraft:cave_vines",
+    "minecraft:cave_vines_plant",
+    "minecraft:straw_bed"
+  ],
+  "icon": "minecraft:hay_block",
+  "color": "#D6B23A",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "hearty_meals",
+    "behaviors": [
+      {
+        "type": "absorbaholic:food_modifier",
+        "saturation": [1.15, 1.3, 1.5],
+        "nutrition": [1.0, 1.0, 1.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "rot_prone",
+    "behaviors": [
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:hunger"],
+        "mode": "duration",
+        "value": [1.5, 2.0, 3.0]
+      }
+    ]
+  }
+}

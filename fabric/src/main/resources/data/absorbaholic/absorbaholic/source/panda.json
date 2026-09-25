@@ -1,0 +1,32 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:panda"],
+  "color": "#E7E7E7",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "chubby",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      },
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.05, 0.1, 0.15]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "lazy",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.04, -0.08, -0.12]
+      }
+    ]
+  }
+}

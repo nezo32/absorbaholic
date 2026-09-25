@@ -1,0 +1,30 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:armadillo"],
+  "color": "#AD716D",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "roll_up",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "condition": "sneaking",
+        "multiplier": [0.8, 0.65, 0.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "undead_jitters",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:slowness",
+        "amplifier": [0, 1, 2],
+        "condition": "near_entity",
+        "condition_entities": ["#minecraft:undead"],
+        "condition_radius": 8
+      }
+    ]
+  }
+}

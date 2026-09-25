@@ -1,0 +1,57 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.honey",
+  "targets": [
+    "minecraft:honey_block",
+    "minecraft:honeycomb_block",
+    "minecraft:beehive",
+    "minecraft:bee_nest",
+    "minecraft:resin_block",
+    "minecraft:resin_bricks",
+    "minecraft:resin_brick_slab",
+    "minecraft:resin_brick_stairs",
+    "minecraft:resin_brick_wall",
+    "minecraft:chiseled_resin_bricks",
+    "minecraft:resin_clump"
+  ],
+  "icon": "minecraft:honey_block",
+  "color": "#FBB92C",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "sweet_tooth",
+    "behaviors": [
+      {
+        "type": "absorbaholic:food_modifier",
+        "items": [
+          "minecraft:honey_bottle",
+          "minecraft:sweet_berries",
+          "minecraft:glow_berries",
+          "minecraft:cookie",
+          "minecraft:pumpkin_pie",
+          "minecraft:melon_slice",
+          "minecraft:apple"
+        ],
+        "nutrition": [1.5, 2.0, 2.5],
+        "saturation": [1.5, 2.0, 2.5]
+      },
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:poison"],
+        "mode": "duration",
+        "value": [0.75, 0.5, 0.25]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "honey_thief",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:bee"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

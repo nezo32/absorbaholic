@@ -1,0 +1,29 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.wood",
+  "targets": ["#minecraft:logs", "#minecraft:bamboo_blocks", "minecraft:mangrove_roots"],
+  "icon": "minecraft:oak_log",
+  "color": "#6B5132",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "heartwood",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "kindling",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [1.25, 1.5, 1.75]
+      }
+    ]
+  }
+}

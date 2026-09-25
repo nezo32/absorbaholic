@@ -1,0 +1,38 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:mooshroom"],
+  "color": "#A1100F",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "stew_belly",
+    "behaviors": [
+      {
+        "type": "absorbaholic:food_modifier",
+        "items": [
+          "minecraft:mushroom_stew",
+          "minecraft:suspicious_stew",
+          "minecraft:rabbit_stew",
+          "minecraft:beetroot_soup"
+        ],
+        "nutrition": [1.5, 2.0, 3.0],
+        "saturation": [1.5, 2.0, 3.0]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "lightning_magnet",
+    "behaviors": [
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": ["thundering", "open_sky"],
+        "damage": [0.5, 1.0, 1.5]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_types": ["minecraft:lightning_bolt"],
+        "multiplier": [2.0, 3.0, 4.0]
+      }
+    ]
+  }
+}

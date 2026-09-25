@@ -1,0 +1,29 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.dirt",
+  "targets": ["#minecraft:dirt", "#minecraft:grass_blocks", "minecraft:dirt_path", "minecraft:farmland"],
+  "icon": "minecraft:dirt",
+  "color": "#866043",
+  "tier": "common",
+  "max_level": 3,
+  "trait": {
+    "key": "down_to_earth",
+    "attributes": [
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.1, 0.2, 0.3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "weak_knees",
+    "attributes": [
+      {
+        "attribute": "minecraft:safe_fall_distance",
+        "operation": "add_value",
+        "amount": [-0.5, -1.0, -1.5]
+      }
+    ]
+  }
+}

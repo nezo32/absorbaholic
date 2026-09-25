@@ -1,0 +1,35 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:piglin"],
+  "color": "#E0A28B",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "piglin_pal",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:piglin"],
+        "attitude": "ignore"
+      }
+    ]
+  },
+  "weakness": {
+    "key": "zombifying",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "all",
+        "condition": "!in_nether",
+        "multiplier": [0.8, 0.6, 0.4]
+      }
+    ]
+  }
+}

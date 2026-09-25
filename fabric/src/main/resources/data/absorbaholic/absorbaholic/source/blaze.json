@@ -1,0 +1,38 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:blaze"],
+  "color": "#F6B201",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "blaze_barrage",
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "small_fireball",
+        "count": [1, 2, 3],
+        "cooldown": [40, 30, 20]
+      },
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [0.6, 0.4, 0.25]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "snowball_bane",
+    "behaviors": [
+      {
+        "type": "absorbaholic:struck_by",
+        "entities": ["minecraft:snowball"],
+        "damage": [2, 3, 4]
+      },
+      {
+        "type": "absorbaholic:environment_damage",
+        "condition": "wet",
+        "damage": [0.5, 1.0, 1.5]
+      }
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:zombified_piglin"],
+  "color": "#EA9393",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "fire_blooded",
+    "behaviors": [
+      {
+        "type": "absorbaholic:damage_multiplier",
+        "damage_tag": "minecraft:is_fire",
+        "multiplier": [0.8, 0.6, 0.4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "pigman_grudge",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:zombified_piglin"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

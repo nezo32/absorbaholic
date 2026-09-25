@@ -1,0 +1,44 @@
+{
+  "kind": "block",
+  "name": "absorbaholic.source.iron",
+  "targets": [
+    "#minecraft:iron_ores",
+    "minecraft:raw_iron_block",
+    "minecraft:iron_block",
+    "minecraft:iron_bars",
+    "minecraft:iron_chain",
+    "minecraft:iron_door",
+    "minecraft:iron_trapdoor",
+    "minecraft:heavy_weighted_pressure_plate",
+    "#minecraft:anvil",
+    "#minecraft:cauldrons",
+    "minecraft:hopper",
+    "minecraft:rail",
+    "minecraft:powered_rail",
+    "minecraft:detector_rail",
+    "minecraft:activator_rail"
+  ],
+  "icon": "minecraft:iron_ore",
+  "color": "#D8AF93",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "iron_skin",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor",
+        "operation": "add_value",
+        "amount": [2, 3, 4]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "sinks_like_iron",
+    "behaviors": [
+      {
+        "type": "absorbaholic:sink_in_water",
+        "speed": [0.025, 0.04, 0.055]
+      }
+    ]
+  }
+}

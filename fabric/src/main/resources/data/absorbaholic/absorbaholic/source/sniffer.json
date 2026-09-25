@@ -1,0 +1,32 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:sniffer"],
+  "color": "#8B3A2F",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "long_snout",
+    "attributes": [
+      {
+        "attribute": "minecraft:block_interaction_range",
+        "operation": "add_value",
+        "amount": [1.0, 1.5, 2.0]
+      },
+      {
+        "attribute": "minecraft:luck",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "ancient_pace",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.06, -0.12, -0.18]
+      }
+    ]
+  }
+}

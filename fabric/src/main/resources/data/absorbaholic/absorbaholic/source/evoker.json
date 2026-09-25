@@ -1,0 +1,37 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:evoker"],
+  "color": "#959B9B",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "fang_summoner",
+    "behaviors": [
+      {
+        "type": "absorbaholic:shoot_projectile",
+        "projectile": "evoker_fangs",
+        "count": [5, 8, 12],
+        "damage": [6, 6, 6],
+        "cooldown": [160, 120, 80]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "hollow_soul",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [-2, -4, -6]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:iron_golem"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:warden"],
+  "color": "#0F4649",
+  "tier": "legendary",
+  "max_level": 3,
+  "trait": {
+    "key": "sonic_boom",
+    "attributes": [
+      {
+        "attribute": "minecraft:max_health",
+        "operation": "add_value",
+        "amount": [4, 6, 8]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:sonic_boom",
+        "damage": [6, 8, 10],
+        "range": [10, 15, 20],
+        "cooldown": [200, 160, 120]
+      },
+      {
+        "type": "absorbaholic:effect_modifier",
+        "effects": ["minecraft:blindness", "minecraft:darkness"],
+        "mode": "immune",
+        "value": [1, 1, 1]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "echo_darkness",
+    "behaviors": [
+      {
+        "type": "absorbaholic:status_effect",
+        "effect": "minecraft:darkness",
+        "amplifier": [0, 0, 0],
+        "interval": [200, 160, 120],
+        "duration": [60, 80, 100]
+      }
+    ]
+  }
+}

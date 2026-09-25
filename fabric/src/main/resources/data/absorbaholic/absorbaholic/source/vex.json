@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:vex"],
+  "color": "#8AA4B9",
+  "tier": "rare",
+  "max_level": 3,
+  "trait": {
+    "key": "spectral_blade",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "fading",
+    "behaviors": [
+      {
+        "type": "absorbaholic:heal_multiplier",
+        "source": "all",
+        "multiplier": [0.7, 0.5, 0.35]
+      }
+    ]
+  }
+}

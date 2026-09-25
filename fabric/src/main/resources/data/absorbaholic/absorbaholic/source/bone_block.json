@@ -1,0 +1,28 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:bone_block"],
+  "color": "#E5E1CF",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "calcium_boost",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor_toughness",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "dog_treat",
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:wolf"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
+      }
+    ]
+  }
+}

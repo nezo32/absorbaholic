@@ -1,0 +1,52 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:iron_golem"],
+  "color": "#DAD6D0",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "titan_strength",
+    "attributes": [
+      {
+        "attribute": "minecraft:attack_damage",
+        "operation": "add_value",
+        "amount": [3, 5, 7]
+      },
+      {
+        "attribute": "minecraft:attack_knockback",
+        "operation": "add_value",
+        "amount": [0.5, 1.0, 1.5]
+      },
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.2, 0.4, 0.6]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["#absorbaholic:fears_golem"],
+        "attitude": "flee",
+        "radius": [4, 6, 8],
+        "pause_on_hit": 100
+      }
+    ]
+  },
+  "weakness": {
+    "key": "iron_anchor",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.05, -0.1, -0.15]
+      }
+    ],
+    "behaviors": [
+      {
+        "type": "absorbaholic:sink_in_water",
+        "speed": [0.04, 0.06, 0.08]
+      }
+    ]
+  }
+}

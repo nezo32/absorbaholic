@@ -1,0 +1,26 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:ocelot"],
+  "color": "#E3C272",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "jungle_sprinter",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [0.05, 0.1, 0.15]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "skittish",
+    "behaviors": [
+      {
+        "type": "absorbaholic:knockback_multiplier",
+        "multiplier": [1.2, 1.4, 1.6]
+      }
+    ]
+  }
+}

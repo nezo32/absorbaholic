@@ -1,0 +1,32 @@
+{
+  "kind": "block",
+  "targets": ["minecraft:bedrock"],
+  "color": "#565656",
+  "tier": "epic",
+  "max_level": 3,
+  "trait": {
+    "key": "immovable",
+    "attributes": [
+      {
+        "attribute": "minecraft:knockback_resistance",
+        "operation": "add_value",
+        "amount": [0.4, 0.7, 1.0]
+      },
+      {
+        "attribute": "minecraft:armor",
+        "operation": "add_value",
+        "amount": [2, 4, 6]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "leaden_legs",
+    "attributes": [
+      {
+        "attribute": "minecraft:jump_strength",
+        "operation": "add_multiplied_base",
+        "amount": [-0.1, -0.25, -0.37]
+      }
+    ]
+  }
+}

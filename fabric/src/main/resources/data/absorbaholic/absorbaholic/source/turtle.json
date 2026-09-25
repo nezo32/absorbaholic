@@ -1,0 +1,27 @@
+{
+  "kind": "entity",
+  "targets": ["minecraft:turtle"],
+  "color": "#4DA24D",
+  "tier": "uncommon",
+  "max_level": 3,
+  "trait": {
+    "key": "shell_armor",
+    "attributes": [
+      {
+        "attribute": "minecraft:armor",
+        "operation": "add_value",
+        "amount": [1, 2, 3]
+      }
+    ]
+  },
+  "weakness": {
+    "key": "slowpoke",
+    "attributes": [
+      {
+        "attribute": "minecraft:movement_speed",
+        "operation": "add_multiplied_total",
+        "amount": [-0.05, -0.1, -0.15]
+      }
+    ]
+  }
+}
