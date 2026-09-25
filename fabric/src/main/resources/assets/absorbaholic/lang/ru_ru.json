@@ -48,7 +48,7 @@
 	"absorbaholic.command.value.on": "ВКЛ",
 	"absorbaholic.createWorld.toggle": "Режим Absorbaholic",
 	"absorbaholic.createWorld.toggle.tooltip": "Присядьте с пустой рукой и удерживайте «Использовать» на блоке, жидкости или сильно раненом мобе, чтобы поглотить его: вы получите его черту, а в придачу и слабость. Сохраняется вместе с миром. Позже операторы могут изменить это командой /absorbaholic on|off.",
-	"absorbaholic.hint.empty_hand": "Освободите руку, чтобы поглотить",
+	"absorbaholic.hint.empty_hand": "Освободите обе руки, чтобы поглотить",
 	"absorbaholic.hint.flowing": "Годится только источник",
 	"absorbaholic.hint.maxed": "Уже максимальный уровень",
 	"absorbaholic.hint.needs_health": "Ослабьте до %s%% здоровья",
