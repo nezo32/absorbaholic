@@ -32,8 +32,10 @@ import org.jspecify.annotations.Nullable;
  *     melting {@code frosted_ice} (unabsorbable).</li>
  * <li>{@code solid} (client physics): the fluid's surface is solid ({@link MovementFlags#WALK_ON_WATER} /
  *     {@link MovementFlags#WALK_ON_LAVA} through LivingEntity#canStandOnFluid and #getLiquidCollisionShape on both
- *     sides, see LivingEntityMixin); a player inside the fluid rises onto the surface; sneaking sinks.
- *     {@code radius} is unused and a condition is not allowed (the flag is static client physics).</li>
+ *     sides, see LivingEntityMixin); a player inside the fluid rises onto the surface where one exists (not in falls
+ *     or flowing fluid); sneaking sinks; landing keeps the fluid's fall rules. Only for clients with the mod: a vanilla
+ *     client's server entity gets no surface either, so it simply sinks as in vanilla. {@code radius} is unused and a
+ *     condition is not allowed (the flag is static client physics).</li>
  * </ul>
  */
 public final class WalkOnFluidBehavior implements Behavior<WalkOnFluidBehavior.Params> {

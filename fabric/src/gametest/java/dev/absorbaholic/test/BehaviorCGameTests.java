@@ -16,6 +16,7 @@ import dev.absorbaholic.core.SourceKind;
 import dev.absorbaholic.core.SourceSpec;
 import dev.absorbaholic.core.SourceSpecParser;
 import dev.absorbaholic.core.Tier;
+import dev.absorbaholic.net.MovementPayload;
 import dev.absorbaholic.player.PlayerData;
 import dev.absorbaholic.player.PlayerTraits;
 import dev.absorbaholic.player.TraitEntry;
@@ -186,7 +187,7 @@ public class BehaviorCGameTests {
 
 	@GameTest
 	public void walkOnFluidSolidStandsOnLava(GameTestHelper h) {
-		ServerPlayer p = player(h, 1.5, 1, 1.5, 0, 0);
+		ServerPlayer p = player(h, 1.5, 1, 1.5, 0, 0, true); // fluid walking is only given to clients with the mod
 		try {
 			give(p, 1, 0, source("strider", List.of(entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"lava\",\"mode\":\"solid\",\"radius\":[0,0,0]}")), List.of()));
 			MovementState m = ((MovementFlagsHolder) p).absorbaholic$movement();
@@ -1027,8 +1028,13 @@ public class BehaviorCGameTests {
 	// ---- helpers ---------------------------------------------------------------------------------------------
 
 	private static ServerPlayer player(GameTestHelper h, double x, double y, double z, float yRot, float xRot) {
+		return player(h, x, y, z, yRot, xRot, false);
+	}
+
+	/** {@code modded}: the client declares the movement channel (has the mod). */
+	private static ServerPlayer player(GameTestHelper h, double x, double y, double z, float yRot, float xRot, boolean modded) {
 		TestSupport.setMode(h, true);
-		ServerPlayer p = TestSupport.survivalPlayer(h);
+		ServerPlayer p = TestSupport.survivalPlayer(h, modded ? List.of(MovementPayload.TYPE) : List.of());
 		Vec3 at = h.absoluteVec(new Vec3(x, y, z));
 		p.snapTo(at.x, at.y, at.z, yRot, xRot);
 		return p;

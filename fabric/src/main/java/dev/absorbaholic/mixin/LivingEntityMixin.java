@@ -6,15 +6,21 @@ import dev.absorbaholic.trait.MovementFlags;
 import dev.absorbaholic.trait.MovementFlagsHolder;
 import dev.absorbaholic.trait.MovementState;
 import dev.absorbaholic.trait.TraitEngine;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
@@ -45,7 +51,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *     Both sides: movement is client authoritative and reads the synced flags.</li>
  * <li>{@code travel} HEAD → such a player (not sneaking) inside the fluid it walks on rises at least
  *     {@code AbsorbCaps.FLUID_WALK_RISE_SPEED} until it stands on the surface (canStandOnFluid gives it air physics
- *     there, so without this it would sink). Both sides.</li>
+ *     there, so without this it would sink), but only below a standable surface ({@link #absorbaholic$surfaceAbove}):
+ *     never in a falling or flowing column such as a lava fall. Both sides.</li>
+ * <li>{@code checkFallDamage} HEAD → landing on the surface of a walked fluid keeps vanilla's fluid landing: water
+ *     cancels the fall, lava scales it by {@code AbsorbCaps.FLUID_WALK_LAVA_FALL_FACTOR}.</li>
+ * <li>On the server the fluid-walking flags only exist for players whose client has the mod (TraitEngine strips them
+ *     otherwise), so a vanilla client that sinks is never corrected back onto the surface.</li>
  * <li>{@code knockback(DDDLDamageSource;FZ)V} HEAD {@code @ModifyVariable(argsOnly, ordinal 0)}: the strength a
  *     ServerPlayer takes → {@code TraitEngine.modifyKnockback} (knockback_multiplier).</li>
  * <li>{@code readAdditionalSaveData} RETURN → the raw saved {@code Health} of a ServerPlayer, before vanilla clamped it
@@ -103,10 +114,34 @@ public abstract class LivingEntityMixin {
 		int flags = absorbaholic$fluidFlags();
 		if (flags == 0) return;
 		Player player = (Player) (Object) this;
-		if ((flags & MovementFlags.WALK_ON_LAVA) != 0 && player.isInLava() || (flags & MovementFlags.WALK_ON_WATER) != 0 && player.isInWater()) {
+		boolean lava = (flags & MovementFlags.WALK_ON_LAVA) != 0 && player.isInLava();
+		boolean water = (flags & MovementFlags.WALK_ON_WATER) != 0 && player.isInWater();
+		if ((lava || water) && absorbaholic$surfaceAbove(player, lava ? FluidTags.LAVA : FluidTags.WATER)) {
 			Vec3 v = player.getDeltaMovement();
 			if (v.y < AbsorbCaps.FLUID_WALK_RISE_SPEED) player.setDeltaMovement(v.x, AbsorbCaps.FLUID_WALK_RISE_SPEED, v.z);
 		}
+	}
+
+	@Inject(method = "checkFallDamage(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"))
+	private void absorbaholic$fluidLanding(double ya, boolean onGround, BlockState onState, BlockPos pos, CallbackInfo ci) {
+		if (!onGround) return;
+		int flags = absorbaholic$fluidFlags();
+		if (flags == 0) return;
+		LivingEntity self = (LivingEntity) (Object) this;
+		FluidState fluid = onState.getFluidState();
+		if (!fluid.isSource()) return;
+		double factor;
+		if ((flags & MovementFlags.WALK_ON_WATER) != 0 && fluid.is(FluidTags.WATER)) {
+			factor = 0.0;
+		} else if ((flags & MovementFlags.WALK_ON_LAVA) != 0 && fluid.is(FluidTags.LAVA)) {
+			factor = AbsorbCaps.FLUID_WALK_LAVA_FALL_FACTOR;
+		} else {
+			return;
+		}
+		// Entity#checkFallDamage first adds this tick's drop (-ya, unless in water), then lands with the total
+		double added = !self.isInWater() && ya < 0.0 ? -ya : 0.0;
+		double total = self.fallDistance + added;
+		if (total > 0.0) self.fallDistance = total * factor - added;
 	}
 
 	@ModifyVariable(method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
@@ -162,6 +197,24 @@ public abstract class LivingEntityMixin {
 	private int absorbaholic$fluidFlags() {
 		if (!((Object) this instanceof Player player) || player.isShiftKeyDown() || player.isPassenger() || player.getAbilities().flying) return 0;
 		return ((MovementFlagsHolder) player).absorbaholic$movement().flags() & (MovementFlags.WALK_ON_WATER | MovementFlags.WALK_ON_LAVA);
+	}
+
+	/**
+	 * True when a standable surface of {@code fluid} is above the player's feet: the feet block and every block up to
+	 * the surface are source blocks of that fluid, and the block above the top one holds none of it (the condition under
+	 * which LiquidBlock gives a fluid walker a collision top). Scans at most {@code AbsorbCaps.FLUID_WALK_SURFACE_SCAN}.
+	 */
+	@Unique
+	private static boolean absorbaholic$surfaceAbove(Player player, TagKey<Fluid> fluid) {
+		Level level = player.level();
+		BlockPos.MutableBlockPos pos = BlockPos.containing(player.getX(), player.getY(), player.getZ()).mutable();
+		for (int i = 0; i < AbsorbCaps.FLUID_WALK_SURFACE_SCAN; i++) {
+			BlockState state = level.getBlockState(pos);
+			if (!(state.getBlock() instanceof LiquidBlock) || !state.getFluidState().isSource() || !state.getFluidState().is(fluid)) return false;
+			pos.move(0, 1, 0);
+			if (!level.getFluidState(pos).is(fluid)) return true;
+		}
+		return false;
 	}
 
 	@Unique

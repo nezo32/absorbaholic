@@ -42,7 +42,7 @@ import org.jspecify.annotations.Nullable;
  * The absorb HUD, drawn right after the crosshair: a small hint box to the right of the crosshair while sneaking
  * and looking at a block, fluid or mob in reach (source name in its tier color, trait and weakness, or {@code ???}
  * when nobody in this world has absorbed that source yet; plus one status line: needs low health, protected, not a
- * source block, already maxed or empty your hand; "not absorbable" for targets without a source) and a progress
+ * source block, already maxed or empty both hands; "not absorbable" for targets without a source) and a progress
  * ring around the crosshair while the server channels an absorption. Nothing when hints are off, the mode is off,
  * in creative / spectator, in third person, with a screen open or with the HUD hidden (F1).
  *
@@ -177,7 +177,7 @@ public final class AbsorbHud {
 		if (status.isEmpty() && owned.isPresent() && owned.get().traitLevel() >= source.maxLevel()) {
 			status.add(new Line(Component.translatable("absorbaholic.hint.maxed"), TraitsScreen.WARNING_COLOR));
 		}
-		if (status.isEmpty() && !player.getMainHandItem().isEmpty()) {
+		if (status.isEmpty() && (!player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty())) {
 			status.add(new Line(Component.translatable("absorbaholic.hint.empty_hand"), TraitsScreen.MUTED_COLOR));
 		}
 		lines.addAll(status);

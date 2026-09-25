@@ -434,7 +434,8 @@ public final class TraitEngine {
 	 * loaded / copied health to the max WITHOUT our transient modifiers; the raw value was kept in
 	 * {@code PlayerRuntime.pendingHealth} (LivingEntityMixin reads the saved {@code Health} on load, {@link #carryHealth}
 	 * on an End exit) and is restored, clamped to the new max, right after the first rebuild applied our modifiers, but
-	 * only while the player still has the clamped health (it was not hurt in between). Consumed either way.
+	 * only while the player still has the clamped health (it was not hurt in between). Consumed either way. A death
+	 * respawn asks for full health ({@link #RESPAWN_FULL_HEALTH}): vanilla respawns at the max without our modifiers.
 	 */
 	private static void restoreHealth(ServerPlayer p, PlayerRuntime rt, float maxBefore) {
 		float pending = rt.pendingHealth;
@@ -444,11 +445,17 @@ public final class TraitEngine {
 		if (restored > p.getHealth()) p.setHealth(restored);
 	}
 
-	/** COPY_FROM: an End exit ({@code alive}) keeps the old entity's health for {@link #restoreHealth}. */
+	/** {@code pendingHealth} of a death respawn: full health at the max with our modifiers (clamped by restoreHealth). */
+	private static final float RESPAWN_FULL_HEALTH = Float.MAX_VALUE;
+
+	/**
+	 * COPY_FROM: an End exit ({@code alive}) keeps the old entity's health for {@link #restoreHealth}; a death respawn
+	 * starts at full health once the max-health modifiers are back.
+	 */
 	private static void carryHealth(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean alive) {
-		if (!alive || newPlayer instanceof FakePlayer) return;
+		if (newPlayer instanceof FakePlayer) return;
 		try {
-			float health = oldPlayer.getHealth();
+			float health = alive ? oldPlayer.getHealth() : RESPAWN_FULL_HEALTH;
 			// Fabric may hand the new entity the old runtime object afterwards (AFTER_RESPAWN): set both
 			PlayerData.runtime(oldPlayer).pendingHealth = health;
 			PlayerData.runtime(newPlayer).pendingHealth = health;
@@ -483,11 +490,17 @@ public final class TraitEngine {
 		}
 	}
 
+	/**
+	 * Stores the movement state on the server entity and sends it to a modded client. A vanilla client can't simulate
+	 * fluid walking, so its server entity doesn't get those flags either: otherwise the server's movement check would
+	 * collide with the fluid surface and keep teleporting the sinking client back on top.
+	 */
 	private static void syncMovement(ServerPlayer p, PlayerRuntime rt, MovementState state) {
-		((MovementFlagsHolder) p).absorbaholic$setMovement(state);
+		boolean modded = ServerPlayNetworking.canSend(p, MovementPayload.TYPE);
+		((MovementFlagsHolder) p).absorbaholic$setMovement(modded ? state : state.without(MovementFlags.WALK_ON_WATER | MovementFlags.WALK_ON_LAVA));
 		if (state.equals(rt.sentMovement)) return;
 		rt.sentMovement = state;
-		if (ServerPlayNetworking.canSend(p, MovementPayload.TYPE)) ServerPlayNetworking.send(p, new MovementPayload(state));
+		if (modded) ServerPlayNetworking.send(p, new MovementPayload(state));
 	}
 
 	private static void syncAura(ServerPlayer p, PlayerRuntime rt, PlayerTraits traits) {

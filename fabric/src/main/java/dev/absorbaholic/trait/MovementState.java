@@ -26,6 +26,11 @@ public record MovementState(int flags, float climbSpeed, float sinkSpeed) {
 		return (flags & flag) != 0;
 	}
 
+	/** This state without the {@code flags} bits. */
+	public MovementState without(int flags) {
+		return (this.flags & flags) == 0 ? this : new MovementState(this.flags & ~flags, climbSpeed, sinkSpeed);
+	}
+
 	public MovementState merge(MovementState other) {
 		if (other == NONE) return this;
 		if (this == NONE) return other;

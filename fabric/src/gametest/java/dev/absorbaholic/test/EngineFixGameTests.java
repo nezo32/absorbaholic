@@ -13,6 +13,7 @@ import dev.absorbaholic.core.SourceKind;
 import dev.absorbaholic.core.SourceSpec;
 import dev.absorbaholic.core.SourceSpecParser;
 import dev.absorbaholic.core.Tier;
+import dev.absorbaholic.net.MovementPayload;
 import dev.absorbaholic.player.PlayerData;
 import dev.absorbaholic.player.PlayerTraits;
 import dev.absorbaholic.player.TraitEntry;
@@ -26,6 +27,8 @@ import dev.absorbaholic.trait.AttributeEntry;
 import dev.absorbaholic.trait.BehaviorEntry;
 import dev.absorbaholic.trait.BehaviorType;
 import dev.absorbaholic.trait.Hook;
+import dev.absorbaholic.trait.MovementFlags;
+import dev.absorbaholic.trait.MovementFlagsHolder;
 import dev.absorbaholic.trait.TraitEngine;
 import dev.absorbaholic.trait.WeaknessDamage;
 import dev.absorbaholic.trait.behavior.DamageDealtMultiplierBehavior;
@@ -34,15 +37,18 @@ import dev.absorbaholic.trait.behavior.HungerDrainBehavior;
 import dev.absorbaholic.trait.behavior.KnockbackMultiplierBehavior;
 import dev.absorbaholic.trait.behavior.MobAttitudeBehavior;
 import dev.absorbaholic.trait.behavior.WalkOnFluidBehavior;
+import dev.absorbaholic.world.AbsorbWorldSettings;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
@@ -50,6 +56,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.Vec3;
@@ -58,7 +65,9 @@ import net.minecraft.world.phys.Vec3;
  * Engine review fixes (fix round 1), each proven through the real engine wiring: C1 (walk_on_fluid solid stands on
  * lava), M5 (knockback_multiplier and the shipped knockback weaknesses), m1 (weakness damage credited to a player is
  * not multiplied again), m2 (weakness-caused burning and starvation are charged to the damage gate), m3 (max-health
- * bonuses survive a relog and an End exit) and m8 (the emerald weakness makes iron golems hostile, no Bad Omen).
+ * bonuses survive a relog and an End exit) and m8 (the emerald weakness makes iron golems hostile, no Bad Omen); plus the
+ * final review's R3 (no rise in a lava fall), R5 (full health after a death respawn), R6 (fluid landing rules) and R7
+ * (no fluid surface for vanilla clients).
  */
 public class EngineFixGameTests {
 	// ---- C1 --------------------------------------------------------------------------------------------------
@@ -77,7 +86,7 @@ public class EngineFixGameTests {
 				h.setBlock(new BlockPos(x, 3, z), Blocks.AIR);
 			}
 		}
-		ServerPlayer p = player(h, 2.5, 2.6, 2.5);
+		ServerPlayer p = moddedPlayer(h, 2.5, 2.6, 2.5);
 		try {
 			give(p, 3, 0, source("strider", List.of(entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"lava\",\"mode\":\"solid\",\"radius\":[0,0,0]}")), List.of()));
 			double surface = h.absoluteVec(new Vec3(0, 2.0, 0)).y; // the lava source's collision top (block top)
@@ -105,6 +114,153 @@ public class EngineFixGameTests {
 			h.assertTrue(p.getY() < surface - 0.05, "sneaking sinks into the lava, y=" + p.getY());
 		} finally {
 			remove(p);
+		}
+		h.succeed();
+	}
+
+	/** Final review R3: in a lava fall (falling, non-source lava) there is no surface, so nothing lifts the player. */
+	@GameTest(maxTicks = 100)
+	public void striderFallsThroughLavaFall(GameTestHelper h) {
+		// a 1x1 shaft: stone floor at y=0, a lava source at y=6 under a stone lid, falling lava at y=1..5
+		for (int y = 0; y <= 7; y++) {
+			for (int x = 2; x <= 4; x++) {
+				for (int z = 2; z <= 4; z++) {
+					if (x != 3 || z != 3 || y == 0 || y == 7) h.setBlock(new BlockPos(x, y, z), Blocks.STONE);
+				}
+			}
+		}
+		h.setBlock(new BlockPos(3, 6, 3), Blocks.LAVA);
+		for (int y = 1; y <= 5; y++) {
+			h.setBlock(new BlockPos(3, y, 3), Blocks.LAVA.defaultBlockState().setValue(LiquidBlock.LEVEL, 8));
+		}
+		ServerPlayer p = moddedPlayer(h, 3.5, 3.0, 3.5);
+		try {
+			p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200));
+			give(p, 3, 0, source("strider_fall", List.of(entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"lava\",\"mode\":\"solid\",\"radius\":[0,0,0]}")), List.of()));
+			double start = p.getY();
+			simulate(p, Vec3.ZERO, 20);
+			h.assertTrue(p.getY() < start - 1.0, "no elevator in a lava fall: y=" + p.getY() + " from " + start);
+			h.assertTrue(p.getY() < h.absoluteVec(new Vec3(0, 1.5, 0)).y, "fell to the shaft floor: y=" + p.getY());
+		} finally {
+			remove(p);
+		}
+		h.succeed();
+	}
+
+	/**
+	 * Final review R6: landing on a walked surface keeps vanilla's fluid landing: water cancels the fall, lava halves it,
+	 * stone takes it all (same fall distance for the three players).
+	 */
+	@GameTest(maxTicks = 100)
+	public void fluidWalkLandingKeepsFluidFallRules(GameTestHelper h) {
+		for (int x = 0; x < 8; x++) {
+			for (int z = 0; z < 8; z++) {
+				boolean rim = z == 0 || z == 7;
+				h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+				h.setBlock(new BlockPos(x, 1, z), !rim && x == 3 ? Blocks.LAVA : !rim && x == 5 ? Blocks.WATER : Blocks.STONE);
+				for (int y = 2; y < 8; y++) h.setBlock(new BlockPos(x, y, z), Blocks.AIR);
+			}
+		}
+		SourceDefinition walker = source("fluid_walker", List.of(
+				entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"lava\",\"mode\":\"solid\",\"radius\":[0,0,0]}"),
+				entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"water\",\"mode\":\"solid\",\"radius\":[0,0,0]}")), List.of());
+		ServerPlayer onStone = moddedPlayer(h, 1.5, 2.5, 3.5);
+		ServerPlayer onLava = moddedPlayer(h, 3.5, 2.5, 3.5);
+		ServerPlayer onWater = moddedPlayer(h, 5.5, 2.5, 3.5);
+		try {
+			ServerPlayer[] players = {onStone, onLava, onWater};
+			float[] lost = new float[players.length];
+			for (int i = 0; i < players.length; i++) {
+				ServerPlayer p = players[i];
+				give(p, 3, 0, walker);
+				p.fallDistance = 10.0;
+				p.setDeltaMovement(0.0, -0.5, 0.0);
+				float health = p.getHealth();
+				for (int t = 0; t < 5; t++) {
+					// the client moves; the server checks fall damage from the reported move (as handleMovePlayer does)
+					Vec3 from = p.position();
+					simulate(p, Vec3.ZERO, 1);
+					Vec3 moved = p.position().subtract(from);
+					p.doCheckFallDamage(moved.x, moved.y, moved.z, p.onGround());
+				}
+				h.assertTrue(p.onGround(), "landed " + i + ", y=" + p.getY());
+				lost[i] = health - p.getHealth();
+			}
+			h.assertTrue(lost[0] >= 6.0F, "stone: full fall damage, lost " + lost[0]);
+			h.assertTrue(lost[1] > 0.0F && lost[1] <= lost[0] - 3.0F, "lava: halved fall, lost " + lost[1] + " vs stone " + lost[0]);
+			h.assertValueEqual(lost[2], 0.0F, "water: no fall damage");
+			h.assertFalse(onLava.isInLava(), "the lava lander stands on the surface");
+		} finally {
+			remove(onStone);
+			remove(onLava);
+			remove(onWater);
+		}
+		h.succeed();
+	}
+
+	/**
+	 * Final review R7: a vanilla client can't simulate fluid walking, so its server entity has no fluid surface (the
+	 * movement check would otherwise keep pulling the sinking client back on top). The modded case is
+	 * {@link #striderWalksOnLava}.
+	 */
+	@GameTest(maxTicks = 100)
+	public void vanillaClientGetsNoFluidSurface(GameTestHelper h) {
+		for (int x = 0; x < 8; x++) {
+			for (int z = 0; z < 8; z++) {
+				h.setBlock(new BlockPos(x, 0, z), Blocks.STONE);
+				h.setBlock(new BlockPos(x, 1, z), x == 0 || z == 0 || x == 7 || z == 7 ? Blocks.STONE : Blocks.LAVA);
+				h.setBlock(new BlockPos(x, 2, z), Blocks.AIR);
+				h.setBlock(new BlockPos(x, 3, z), Blocks.AIR);
+			}
+		}
+		ServerPlayer p = player(h, 3.5, 2.6, 3.5);
+		try {
+			p.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 200));
+			give(p, 3, 0, source("strider_vanilla", List.of(entry(WalkOnFluidBehavior.TYPE, "{\"fluid\":\"lava\",\"mode\":\"solid\",\"radius\":[0,0,0]}")), List.of()));
+			h.assertTrue(TraitEngine.active(p).all().stream().anyMatch(a -> a.type() == WalkOnFluidBehavior.TYPE), "the trait is active");
+			h.assertFalse(((MovementFlagsHolder) p).absorbaholic$movement().has(MovementFlags.WALK_ON_LAVA), "no lava walking flag on the server");
+			simulate(p, Vec3.ZERO, 20);
+			h.assertTrue(p.isInLava() && p.getY() < h.absoluteVec(new Vec3(0, 2.0, 0)).y - 0.05, "sinks like vanilla, y=" + p.getY());
+		} finally {
+			remove(p);
+		}
+		h.succeed();
+	}
+
+	/** Final review R5: a death respawn with +20 max health (keep on death) starts at the full 40, not vanilla's 20. */
+	@GameTest
+	public void deathRespawnStartsAtFullTraitMaxHealth(GameTestHelper h) {
+		SourceDefinition heart = source("heart_respawn", List.of(new AttributeEntry(Attributes.MAX_HEALTH,
+				AttributeModifier.Operation.ADD_VALUE, LevelValue.constant(20.0))), List.of(), List.of(), List.of());
+		MinecraftServer server = h.getLevel().getServer();
+		boolean keep = AbsorbWorldSettings.get(server).keepOnDeath();
+		ServerPlayer p = player(h, 1.5, 1.0, 1.5);
+		ServerPlayer respawned = null;
+		List<SourceDefinition> before = SourceRegistry.all();
+		List<SourceDefinition> with = new ArrayList<>(before);
+		with.add(heart);
+		SourceRegistry.set(with);
+		try {
+			AbsorbWorldSettings.setKeepOnDeath(server, true);
+			PlayerData.setTraits(p, PlayerTraits.EMPTY.with(new TraitEntry(heart.id(), 1, 0, false, false)));
+			TraitEngine.recompute(p);
+			h.assertValueEqual(p.getMaxHealth(), 40.0F, "trait max health");
+			p.kill(h.getLevel());
+			respawned = server.getPlayerList().respawn(p, false, Entity.RemovalReason.KILLED);
+			h.assertTrue(PlayerData.traits(respawned).get(heart.id()).isPresent(), "traits kept on death");
+			TraitEngine.recompute(respawned);
+			h.assertValueEqual(respawned.getMaxHealth(), 40.0F, "max health back");
+			h.assertValueEqual(respawned.getHealth(), 40.0F, "respawned at full trait max health");
+
+			// consumed once: a later rebuild never heals
+			respawned.setHealth(30.0F);
+			TraitEngine.recompute(respawned);
+			h.assertValueEqual(respawned.getHealth(), 30.0F, "no second top-up");
+		} finally {
+			SourceRegistry.set(before);
+			AbsorbWorldSettings.setKeepOnDeath(server, keep);
+			remove(p);
+			if (respawned != null) remove(respawned);
 		}
 		h.succeed();
 	}
@@ -330,6 +486,15 @@ public class EngineFixGameTests {
 	private static ServerPlayer player(GameTestHelper h, double x, double y, double z) {
 		TestSupport.setMode(h, true);
 		ServerPlayer p = TestSupport.survivalPlayer(h);
+		Vec3 at = h.absoluteVec(new Vec3(x, y, z));
+		p.snapTo(at.x, at.y, at.z, 0.0F, 0.0F);
+		return p;
+	}
+
+	/** {@link #player} whose client has the mod (declares the movement channel). */
+	private static ServerPlayer moddedPlayer(GameTestHelper h, double x, double y, double z) {
+		TestSupport.setMode(h, true);
+		ServerPlayer p = TestSupport.survivalPlayer(h, List.of(MovementPayload.TYPE));
 		Vec3 at = h.absoluteVec(new Vec3(x, y, z));
 		p.snapTo(at.x, at.y, at.z, 0.0F, 0.0F);
 		return p;

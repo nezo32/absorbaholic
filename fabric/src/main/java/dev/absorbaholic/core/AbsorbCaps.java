@@ -193,9 +193,17 @@ public final class AbsorbCaps {
 	public static final int FROST_WALK_MAX_RADIUS = 5;
 	/**
 	 * walk_on_fluid solid: a player inside the fluid it walks on (not sneaking) rises at least this fast (blocks per
-	 * tick, before gravity) until it stands on the surface.
+	 * tick, before gravity) until it stands on the surface. Only where a standable surface exists: a column of source
+	 * blocks of that fluid from the feet up to a source with no same fluid above, at most
+	 * {@link #FLUID_WALK_SURFACE_SCAN} blocks up (never in falling or flowing fluid).
 	 */
 	public static final double FLUID_WALK_RISE_SPEED = 0.2;
+	public static final int FLUID_WALK_SURFACE_SCAN = 16;
+	/**
+	 * Landing on a walked fluid surface keeps vanilla's fluid landing: water cancels the fall, lava keeps this share of
+	 * the fall distance (vanilla halves it for a tick spent in lava).
+	 */
+	public static final double FLUID_WALK_LAVA_FALL_FACTOR = 0.5;
 	/** sink_in_water terminal downward velocity (blocks per tick, negative). */
 	public static final double SINK_MAX_FALL_VELOCITY = -0.3;
 	/** retaliate: melee range and per-attacker cooldown; per-attacker cooldowns are pruned above this many attackers. */

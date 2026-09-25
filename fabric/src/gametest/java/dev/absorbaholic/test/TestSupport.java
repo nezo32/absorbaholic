@@ -13,9 +13,12 @@ import dev.absorbaholic.trait.AttributeEntry;
 import dev.absorbaholic.trait.BehaviorEntry;
 import dev.absorbaholic.world.AbsorbWorldSettings;
 import io.netty.channel.embedded.EmbeddedChannel;
+import net.fabricmc.fabric.impl.networking.ChannelInfoHolder;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.Connection;
+import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.protocol.game.ServerboundPlayerLoadedPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -33,11 +36,22 @@ public final class TestSupport {
 	 * ticking): call {@code p.doTick()} when a test needs it.
 	 */
 	public static ServerPlayer survivalPlayer(GameTestHelper h) {
+		return survivalPlayer(h, List.of());
+	}
+
+	/**
+	 * {@link #survivalPlayer(GameTestHelper)} whose client declared the given S2C channels during configuration, like a
+	 * client with the mod ({@code ServerPlayNetworking.canSend} is true for them).
+	 */
+	public static ServerPlayer survivalPlayer(GameTestHelper h, List<CustomPacketPayload.Type<?>> clientChannels) {
 		ServerLevel level = h.getLevel();
 		CommonListenerCookie cookie = CommonListenerCookie.createInitial(new GameProfile(UUID.randomUUID(), "test-mock-player"), false);
 		ServerPlayer p = new ServerPlayer(level.getServer(), level, cookie.gameProfile(), cookie.clientInformation());
 		Connection connection = new Connection(PacketFlow.SERVERBOUND);
 		new EmbeddedChannel(connection);
+		for (CustomPacketPayload.Type<?> type : clientChannels) {
+			((ChannelInfoHolder) connection).fabric_getPendingChannelsNames(ConnectionProtocol.PLAY).add(type.id());
+		}
 		level.getServer().getPlayerList().placeNewPlayer(connection, p, cookie);
 		p.connection.handleAcceptPlayerLoad(new ServerboundPlayerLoadedPacket());
 		p.setGameMode(GameType.SURVIVAL);

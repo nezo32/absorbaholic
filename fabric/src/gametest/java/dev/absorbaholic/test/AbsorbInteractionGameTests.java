@@ -26,6 +26,7 @@ import dev.absorbaholic.player.TraitEntry;
 import dev.absorbaholic.registry.SourceDefinition;
 import dev.absorbaholic.registry.SourceRegistry;
 import dev.absorbaholic.registry.SourceTargets;
+import dev.absorbaholic.trait.behavior.AbilitySupport;
 import dev.absorbaholic.world.AbsorbWorldSettings;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
@@ -78,6 +79,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.dimension.end.EnderDragonFight;
+import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -1018,25 +1020,37 @@ public class AbsorbInteractionGameTests {
 
 	@GameTest
 	public void cooldownsSurviveRelogAndDeath(GameTestHelper h) {
-		UUID id = UUID.randomUUID();
-		Mock first = mock(h, id);
-		long now = now(h);
-		Identifier ability = Identifier.fromNamespaceAndPath("absorbaholic_test", "ability/cooldown");
-		PlayerData.runtime(first.player()).absorbCooldownUntil = now + 150;
-		PlayerData.runtime(first.player()).abilityCooldowns.put(ability, now + 90);
+		// An old world: game time far ahead of the server tick count (which restarts at 0 with every server start).
+		// Each deadline kind must be compared with its own clock. Restored within this call, so no tick sees it.
+		ServerLevelData overworld = h.getLevel().getServer().getWorldData().overworldData();
+		long realGameTime = overworld.getGameTime();
+		overworld.setGameTime(realGameTime + 1_000_000L);
+		try {
+			UUID id = UUID.randomUUID();
+			Mock first = mock(h, id);
+			long gameNow = now(h);
+			long tickNow = AbilitySupport.now(first.player());
+			Identifier ability = Identifier.fromNamespaceAndPath("absorbaholic_test", "ability/cooldown");
+			PlayerData.runtime(first.player()).absorbCooldownUntil = gameNow + 150;
+			PlayerData.runtime(first.player()).abilityCooldowns.put(ability, tickNow + 90);
 
-		// death / End exit: COPY_FROM carries the deadlines over
-		Mock respawned = mock(h);
-		AbsorbCooldowns.copy(first.player(), respawned.player());
-		h.assertValueEqual(PlayerData.runtime(respawned.player()).absorbCooldownUntil, now + 150, "absorb cooldown after death");
-		h.assertValueEqual(PlayerData.runtime(respawned.player()).abilityCooldowns.get(ability), now + 90, "ability cooldown after death");
+			// death / End exit: COPY_FROM carries the deadlines over
+			Mock respawned = mock(h);
+			AbsorbCooldowns.copy(first.player(), respawned.player());
+			h.assertValueEqual(PlayerData.runtime(respawned.player()).absorbCooldownUntil, gameNow + 150, "absorb cooldown after death");
+			h.assertValueEqual(PlayerData.runtime(respawned.player()).abilityCooldowns.get(ability), tickNow + 90, "ability cooldown after death");
+			h.assertFalse(AbilitySupport.elapsed(respawned.player(), ability), "ability still cooling down after death");
 
-		// relog: parked on disconnect, restored by the JOIN of the new entity with the same UUID
-		AbsorbCooldowns.park(first.player());
-		h.getLevel().getServer().getPlayerList().remove(first.player());
-		Mock rejoined = mock(h, id);
-		h.assertValueEqual(PlayerData.runtime(rejoined.player()).absorbCooldownUntil, now + 150, "absorb cooldown after relog");
-		h.assertValueEqual(PlayerData.runtime(rejoined.player()).abilityCooldowns.get(ability), now + 90, "ability cooldown after relog");
+			// relog: parked on disconnect, restored by the JOIN of the new entity with the same UUID
+			AbsorbCooldowns.park(first.player());
+			h.getLevel().getServer().getPlayerList().remove(first.player());
+			Mock rejoined = mock(h, id);
+			h.assertValueEqual(PlayerData.runtime(rejoined.player()).absorbCooldownUntil, gameNow + 150, "absorb cooldown after relog");
+			h.assertValueEqual(PlayerData.runtime(rejoined.player()).abilityCooldowns.get(ability), tickNow + 90, "ability cooldown after relog");
+			h.assertFalse(AbilitySupport.elapsed(rejoined.player(), ability), "ability still cooling down after relog");
+		} finally {
+			overworld.setGameTime(realGameTime);
+		}
 		h.succeed();
 	}
 

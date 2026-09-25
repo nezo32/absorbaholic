@@ -381,7 +381,7 @@ least `max_level` long, or a single number multiplied by the level. Every behavi
 | Tag | Effect |
 |---|---|
 | `absorbaholic:unabsorbable` (block and entity_type) | Never absorbable, whatever the sources say. Ships air, water, portals, technical blocks, spawners, vaults, reinforced deepslate, frosted ice, players, armor stands … |
-| `absorbaholic:bedrock_protected` (block) | Protected in the bottom 5 layers of a dimension and at the Nether roof. Ships `minecraft:bedrock` |
+| `absorbaholic:bedrock_protected` (block) | Protected in the bottom 5 layers of a dimension, in the top 5 under the Nether roof and anywhere in the End. Ships `minecraft:bedrock` |
 | `absorbaholic:fears_golem` (entity_type) | Mobs that flee from the Iron Golem trait. Creepers, bosses, the Warden and the Ravager never flee, even if you add them |
 
 A broken file never stops the server: it's skipped with one warning in the log naming the file and the reason
@@ -413,8 +413,9 @@ description.
 
 - **The mod is needed on both sides.** Players without it on their client can't absorb (vanilla use works as
   usual for them). Traits they already have still work on the server: attributes, damage, effects, and abilities
-  triggered by sneak-jump, sneak-swing and double-tap. Wall climbing, lava walking and gliding don't, and they
-  get no hint, screen or aura. Their messages come in English, and deaths from weakness damage show a raw
+  triggered by sneak-jump, sneak-swing and double-tap. Wall climbing, lava walking and gliding don't (the server
+  gives them no lava surface either, so they sink into lava as in vanilla instead of being pulled back on top), and
+  they get no hint, screen or aura. Their messages come in English, and deaths from weakness damage show a raw
   translation key.
 - **Removed sources stay stored.** When a datapack removes or disables a source, players keep the entry, but it
   does nothing. The traits screen shows it greyed out as inactive, and `/absorbaholic remove` cleans it up.

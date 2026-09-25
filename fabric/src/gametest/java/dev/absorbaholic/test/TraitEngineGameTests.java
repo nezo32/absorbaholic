@@ -15,6 +15,7 @@ import dev.absorbaholic.core.AbsorbCaps;
 import dev.absorbaholic.core.LevelValue;
 import dev.absorbaholic.core.SourceKind;
 import dev.absorbaholic.core.Tier;
+import dev.absorbaholic.net.MovementPayload;
 import dev.absorbaholic.player.PlayerData;
 import dev.absorbaholic.player.PlayerRuntime;
 import dev.absorbaholic.player.PlayerTraits;
@@ -589,7 +590,7 @@ public class TraitEngineGameTests {
 	public void movementFlagsAndAura(GameTestHelper h) {
 		Probe probe = new Probe("movement");
 		probe.movement = new MovementState(MovementFlags.WALK_ON_WATER | MovementFlags.CLIMB_WALLS | MovementFlags.GLIDE, 0.12F, 0.0F);
-		ServerPlayer p = player(h);
+		ServerPlayer p = player(h, true); // fluid walking is only given to clients with the mod
 		try {
 			give(p, 2, 0, source("movement", 0x336699, List.of(), List.of(probe.entry()), List.of(), List.of()));
 			MovementState state = ((MovementFlagsHolder) p).absorbaholic$movement();
@@ -823,8 +824,13 @@ public class TraitEngineGameTests {
 	}
 
 	private static ServerPlayer player(GameTestHelper h) {
+		return player(h, false);
+	}
+
+	/** {@code modded}: the client declares the movement channel (has the mod). */
+	private static ServerPlayer player(GameTestHelper h, boolean modded) {
 		TestSupport.setMode(h, true);
-		ServerPlayer p = TestSupport.survivalPlayer(h);
+		ServerPlayer p = TestSupport.survivalPlayer(h, modded ? List.of(MovementPayload.TYPE) : List.of());
 		Vec3 at = h.absoluteVec(new Vec3(1.5, 1.0, 1.5));
 		p.snapTo(at.x, at.y, at.z, 0.0F, 0.0F);
 		return p;

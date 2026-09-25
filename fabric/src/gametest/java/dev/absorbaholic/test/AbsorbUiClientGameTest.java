@@ -238,6 +238,14 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 			sp.getServer().runCommand("item replace entity @p weapon.mainhand with minecraft:air");
 			ctx.waitFor(mc -> mc.player.getMainHandItem().isEmpty());
 
+			// full off hand (both hands must be empty, AbsorbRules.poseAllows)
+			sp.getServer().runCommand("item replace entity @p weapon.offhand with minecraft:shield");
+			ctx.waitFor(mc -> !mc.player.getOffhandItem().isEmpty());
+			ctx.waitTicks(2);
+			expectLine(hint(ctx, "full off hand"), 3, Component.translatable("absorbaholic.hint.empty_hand"), "full off hand");
+			sp.getServer().runCommand("item replace entity @p weapon.offhand with minecraft:air");
+			ctx.waitFor(mc -> mc.player.getOffhandItem().isEmpty());
+
 			// not absorbable
 			sp.getServer().runCommand("setblock " + pos(front) + " minecraft:gold_block");
 			ctx.waitTicks(3);
@@ -336,6 +344,9 @@ public class AbsorbUiClientGameTest implements FabricClientGameTest {
 	// ---- traits screen ----
 
 	private static void traitsScreen(ClientGameTestContext ctx, String lang) {
+		// the default is K by name on the running version (a 26.3-built jar inlined SDL's KEY_K = 14 before, no key on 26.2)
+		String defaultKey = ctx.computeOnClient(mc -> TraitsKeybind.key().getDefaultKey().getName());
+		if (!"key.keyboard.k".equals(defaultKey)) throw new AssertionError("default traits key is not K: " + defaultKey);
 		ctx.getInput().pressKey(o -> TraitsKeybind.key());
 		ctx.waitForScreen(TraitsScreen.class);
 		ctx.getInput().setCursorPos(0, 0); // opening a screen centres the cursor over a row: keep the overview tooltip-free
