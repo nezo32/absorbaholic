@@ -13,7 +13,8 @@
 			"dev.absorbaholic.test.TraitEngineGameTests",
 			"dev.absorbaholic.test.BehaviorAGameTests",
 			"dev.absorbaholic.test.BehaviorBGameTests",
-			"dev.absorbaholic.test.BehaviorCGameTests"
+			"dev.absorbaholic.test.BehaviorCGameTests",
+			"dev.absorbaholic.test.AcceptanceGameTests"
 		],
 		"fabric-client-gametest": [
 			"dev.absorbaholic.test.AbsorbClientGameTest",
