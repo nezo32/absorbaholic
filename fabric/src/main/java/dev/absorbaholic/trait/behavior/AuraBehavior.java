@@ -42,7 +42,7 @@ public final class AuraBehavior implements Behavior<AuraBehavior.Params> {
 		public static final MapCodec<Params> CODEC = RecordCodecBuilder.<Params>mapCodec(i -> i.group(
 				TargetFilter.CODEC.fieldOf("targets").forGetter(Params::targets),
 				LevelValue.CODEC.fieldOf("radius").forGetter(Params::radius),
-				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, 72000).optionalFieldOf("interval", 20).forGetter(Params::interval),
+				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, AbsorbCaps.BEHAVIOR_MAX_TICK_INTERVAL).optionalFieldOf("interval", 20).forGetter(Params::interval),
 				MobEffect.CODEC.optionalFieldOf("effect").forGetter(Params::effect),
 				LevelValue.CODEC.optionalFieldOf("amplifier").forGetter(Params::amplifier),
 				LevelValue.CODEC.optionalFieldOf("duration").forGetter(Params::duration),
@@ -83,7 +83,7 @@ public final class AuraBehavior implements Behavior<AuraBehavior.Params> {
 				e -> e != player && eligible(e, player, p.targets()));
 		int n = 0;
 		for (LivingEntity e : found) {
-			if (++n > MobRules.MAX_MOBS_PER_SCAN) break;
+			if (++n > AbsorbCaps.MOB_SCAN_MAX_MOBS) break;
 			if (applyEffect) e.addEffect(new MobEffectInstance(p.effect().get(), duration, amplifier), player);
 			if (fireTicks > 0 && !e.fireImmune() && e.getRemainingFireTicks() < fireTicks) e.setRemainingFireTicks(fireTicks);
 		}

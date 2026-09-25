@@ -368,6 +368,12 @@ def f_food_modifier(b, n):
     return with_cond(f"{subject}: {', '.join(parts) if parts else 'modified'}", b)
 
 
+def f_knockback_multiplier(b, n):
+    who = b.get("attacker")
+    source = f" from {things(who if isinstance(who, list) else [who])}" if who else ""
+    return with_cond(f"Knockback taken{source} {pct(levels(b.get('multiplier'), n))}", b)
+
+
 def f_xp_multiplier(b, n):
     return with_cond(f"XP from orbs {pct(levels(b.get('multiplier'), n))}", b)
 
@@ -602,8 +608,10 @@ CAPS_ROWS = [
     ("Pure / mutation chance", "{PURE_CHANCE%} / {MUTATION_CHANCE%} per absorption"),
     ("Source max level", "default {DEFAULT_MAX_LEVEL}, allowed {MIN_MAX_LEVEL}–{MAX_MAX_LEVEL}"),
     ("Trait slots per player", "default {DEFAULT_MAX_TRAITS}, `/absorbaholic max` {MIN_MAX_TRAITS}–{MAX_MAX_TRAITS}"),
-    ("Weakness damage", "at most {WEAKNESS_DAMAGE_BUDGET} HP per {WEAKNESS_DAMAGE_WINDOW_TICKS} ticks; one hit never "
-                        "takes you from full health below {WEAKNESS_MIN_HEALTH_FROM_FULL} HP"),
+    ("Weakness damage", "at most {WEAKNESS_DAMAGE_BUDGET} HP (and at most your max health − "
+                        "{WEAKNESS_MIN_HEALTH_FROM_FULL}) per {WEAKNESS_DAMAGE_WINDOW_TICKS} ticks, weakness-caused "
+                        "burning and starvation included; if you were at full health during that time, weaknesses "
+                        "never take you below {WEAKNESS_MIN_HEALTH_FROM_FULL} HP"),
     ("Damage taken (all traits combined)", "never below ×{DAMAGE_TAKEN_FLOOR} (max {DAMAGE_TAKEN_FLOOR~} "
                                            "reduction); weaknesses at most ×{DAMAGE_TAKEN_WEAKNESS_CEILING}"),
     ("Immunities", "only fire, fall, drowning, freezing, magma floor, cactus, berry bush, lightning and ender "
@@ -611,6 +619,7 @@ CAPS_ROWS = [
     ("Damage dealt", "×{DAMAGE_DEALT_MIN}–×{DAMAGE_DEALT_MAX}"),
     ("Healing", "×{HEAL_FACTOR_MIN}–×{HEAL_FACTOR_MAX}"),
     ("Hunger drain", "×{EXHAUSTION_FACTOR_MIN}–×{EXHAUSTION_FACTOR_MAX}"),
+    ("Knockback taken", "×{KNOCKBACK_FACTOR_MIN}–×{KNOCKBACK_FACTOR_MAX}"),
     ("XP from orbs", "×{EXPERIENCE_FACTOR_MIN}–×{EXPERIENCE_FACTOR_MAX}"),
     ("Item wear", "×{DURABILITY_FACTOR_MIN}–×{DURABILITY_FACTOR_MAX}"),
     ("Mob detection range", "×{VISIBILITY_FACTOR_MIN}–×{VISIBILITY_FACTOR_MAX}, provoking at most "

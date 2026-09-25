@@ -174,4 +174,12 @@ public interface Behavior<P> {
 	default float durabilityFactor(ActiveBehavior<P> self, ServerPlayer player, ItemStack stack, int amount) {
 		return 1.0F;
 	}
+
+	/**
+	 * Factor on the knockback the player takes ({@code LivingEntity#knockback} strength, before vanilla knockback
+	 * resistance); {@code source} is the damage that caused it, if any.
+	 */
+	default float knockbackFactor(ActiveBehavior<P> self, ServerPlayer player, @Nullable DamageSource source, double strength) {
+		return 1.0F;
+	}
 }

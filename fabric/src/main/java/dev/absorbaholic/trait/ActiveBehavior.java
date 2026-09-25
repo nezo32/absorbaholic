@@ -113,4 +113,6 @@ public record ActiveBehavior<P>(BehaviorEntry<P> entry, int level, Identifier so
 	public float experienceFactor(ServerPlayer p, int amount) { return b().experienceFactor(this, p, amount); }
 
 	public float durabilityFactor(ServerPlayer p, ItemStack stack, int amount) { return b().durabilityFactor(this, p, stack, amount); }
+
+	public float knockbackFactor(ServerPlayer p, @Nullable DamageSource source, double strength) { return b().knockbackFactor(this, p, source, strength); }
 }

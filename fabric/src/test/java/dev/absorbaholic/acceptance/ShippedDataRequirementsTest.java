@@ -140,7 +140,7 @@ class ShippedDataRequirementsTest {
 	private static final List<Example> EXAMPLES = List.of(
 			new Example("absorbaholic:obsidian", "block", "minecraft:obsidian", "explosion_knockback_resistance|damage_multiplier", "movement_speed"),
 			new Example("absorbaholic:lava", "block", "minecraft:lava", "damage_multiplier", "environment_damage"),
-			new Example("absorbaholic:slime_block", "block", "minecraft:slime_block", "bounciness|jump_strength", "knockback_resistance"),
+			new Example("absorbaholic:slime_block", "block", "minecraft:slime_block", "bounciness|jump_strength", "knockback_multiplier"),
 			new Example("absorbaholic:ice", "block", "#minecraft:ice", "walk_on_fluid", "burning_time|damage_multiplier"),
 			new Example("absorbaholic:cactus", "block", "minecraft:cactus", "retaliate", "heal_multiplier|hunger_drain"),
 			new Example("absorbaholic:sponge", "block", "minecraft:sponge", "oxygen_bonus", "hunger_drain|environment_damage"),

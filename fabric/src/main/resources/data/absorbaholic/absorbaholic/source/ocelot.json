@@ -16,11 +16,10 @@
   },
   "weakness": {
     "key": "skittish",
-    "attributes": [
+    "behaviors": [
       {
-        "attribute": "minecraft:knockback_resistance",
-        "operation": "add_value",
-        "amount": [-0.2, -0.4, -0.6]
+        "type": "absorbaholic:knockback_multiplier",
+        "multiplier": [1.2, 1.4, 1.6]
       }
     ]
   }

@@ -51,11 +51,17 @@ public final class AbsorbCaps {
 
 	// ---- weakness damage gate ----------------------------------------------------------------------------------
 
-	/** At most this much weakness damage (direct + weakness-multiplier extra) per rolling window: 4 hearts. */
+	/**
+	 * At most this much weakness damage (direct + weakness-multiplier extra + weakness-caused burning / starvation) per
+	 * rolling window: 4 hearts. The effective budget of a player is {@code min(this, maxHealth - WEAKNESS_MIN_HEALTH_FROM_FULL)}.
+	 */
 	public static final float WEAKNESS_DAMAGE_BUDGET = 8.0F;
 	/** Length of the rolling window of the weakness damage budget. */
 	public static final int WEAKNESS_DAMAGE_WINDOW_TICKS = 20;
-	/** A single weakness hit never takes a player who is at full health below this health. */
+	/**
+	 * A player who was at full health at any point of the current window is never taken below this health by weakness
+	 * damage in that window (all weakness hits of the window together, not just one).
+	 */
 	public static final float WEAKNESS_MIN_HEALTH_FROM_FULL = 1.0F;
 
 	// ---- damage / heal / food / effect factor caps -------------------------------------------------------------
@@ -84,6 +90,9 @@ public final class AbsorbCaps {
 	public static final float DURABILITY_FACTOR_MAX = 3.0F;
 	/** Max amplifier (0-based) an effect may reach after a weakness amplifies it. */
 	public static final int EFFECT_AMPLIFIER_MAX = 4;
+	/** Combined knockback-taken multiplier range (knockback_multiplier); vanilla knockback resistance applies after it. */
+	public static final float KNOCKBACK_FACTOR_MIN = 0.5F;
+	public static final float KNOCKBACK_FACTOR_MAX = 3.0F;
 
 	/**
 	 * Damage types a trait immunity can never block (in addition to everything in
@@ -121,6 +130,31 @@ public final class AbsorbCaps {
 	/** Flight: exhaustion per flying tick; slow falling granted when flight is lost mid-air. */
 	public static final float FLIGHT_EXHAUSTION_PER_TICK = 0.01F;
 	public static final int FLIGHT_LOSS_SLOW_FALLING_TICKS = 200;
+	/** Flight: allowed flying speed (vanilla creative flight is 0.05). */
+	public static final float FLIGHT_MIN_SPEED = 0.001F;
+	public static final float FLIGHT_MAX_SPEED = 1.0F;
+	/** sneak_swing fires at most once per this many ticks (the 26.2 client sends a swing packet on every click). */
+	public static final int SNEAK_SWING_MIN_INTERVAL_TICKS = 4;
+	/** Teleport: attempts of the random (chorus) search. */
+	public static final int TELEPORT_RANDOM_ATTEMPTS = 16;
+	/** Teleport (look mode): a landing spot may be at most this many blocks below the view ray. */
+	public static final int TELEPORT_LOOK_MAX_DROP = 3;
+
+	// ---- ability caps ------------------------------------------------------------------------------------------
+
+	/** Longest sneak_detonate fuse (10 s). */
+	public static final int SNEAK_DETONATE_MAX_FUSE_TICKS = 200;
+	/** Shulker bullet target search radius (shoot_projectile). */
+	public static final double SHULKER_BULLET_RANGE = 16.0;
+	/** Vanilla evoker fang damage: the base of shoot_projectile's evoker_fangs {@code damage} factor. */
+	public static final float EVOKER_FANG_BASE_DAMAGE = 6.0F;
+	/**
+	 * Gravity used to credit an air_jump burst against the fall distance: a burst of vertical speed v can lift the
+	 * player at most v² / (2 g) blocks (vanilla player gravity, drag ignored), and only that much is taken off.
+	 */
+	public static final double AIR_JUMP_FALL_CREDIT_GRAVITY = 0.08;
+	/** air_jump: most charges a level may grant. */
+	public static final int AIR_JUMP_MAX_CHARGES = 64;
 
 	// ---- behavior-specific caps (behaviors.md) -----------------------------------------------------------------
 
@@ -128,19 +162,46 @@ public final class AbsorbCaps {
 	public static final int CONDITION_CACHE_TICKS = 10;
 	/** Max {@code condition_radius} of near_entity. */
 	public static final double CONDITION_MAX_RADIUS = 16.0;
+	/** {@code condition_radius} of near_entity when the JSON omits it. */
+	public static final double CONDITION_DEFAULT_RADIUS = 8.0;
 	/** Mob-affecting scans never look further than this. */
 	public static final double MOB_SCAN_MAX_RADIUS = 64.0;
+	/** Mob-affecting scans handle at most this many mobs (bounded work even in a mob farm). */
+	public static final int MOB_SCAN_MAX_MOBS = 48;
+	/** detection_range: how often the provoke scan runs (ticks). */
+	public static final int DETECTION_SCAN_INTERVAL_TICKS = 20;
+	/** mob_attitude: scan interval of hostile and of flee (ticks). */
+	public static final int MOB_HOSTILE_INTERVAL_TICKS = 20;
+	public static final int MOB_FLEE_INTERVAL_TICKS = 10;
+	/** mob_attitude flee: AvoidEntityGoal's random position away from the player (horizontal / vertical) and speed. */
+	public static final int MOB_FLEE_MAX_HORIZONTAL = 16;
+	public static final int MOB_FLEE_MAX_VERTICAL = 7;
+	public static final double MOB_FLEE_SPEED = 1.2;
+	/** mob_attitude ignore: revenge lasts this long, covers mobs of the hurt type this close, remembers this many hits. */
+	public static final int MOB_REVENGE_TICKS = 200;
+	public static final double MOB_REVENGE_RADIUS = 16.0;
+	public static final int MOB_REVENGE_MAX_HITS = 16;
 	/** detection_range &gt; 1: provoke radius cap. */
 	public static final double DETECTION_MAX_RADIUS = 48.0;
 	public static final double AURA_MAX_RADIUS = 16.0;
 	public static final double ITEM_MAGNET_MAX_RADIUS = 10.0;
 	public static final double ITEM_MAGNET_PULL = 0.25;
+	/** item_magnet: pulse interval (ticks), at most this many items per pulse, own throws left alone this long. */
+	public static final int ITEM_MAGNET_INTERVAL_TICKS = 5;
+	public static final int ITEM_MAGNET_MAX_ITEMS = 64;
+	public static final int ITEM_MAGNET_OWN_THROW_TICKS = 40;
 	public static final int FROST_WALK_MAX_RADIUS = 5;
+	/**
+	 * walk_on_fluid solid: a player inside the fluid it walks on (not sneaking) rises at least this fast (blocks per
+	 * tick, before gravity) until it stands on the surface.
+	 */
+	public static final double FLUID_WALK_RISE_SPEED = 0.2;
 	/** sink_in_water terminal downward velocity (blocks per tick, negative). */
 	public static final double SINK_MAX_FALL_VELOCITY = -0.3;
-	/** retaliate: melee range and per-attacker cooldown. */
+	/** retaliate: melee range and per-attacker cooldown; per-attacker cooldowns are pruned above this many attackers. */
 	public static final double RETALIATE_MAX_RANGE = 6.0;
 	public static final int RETALIATE_COOLDOWN_TICKS = 10;
+	public static final int RETALIATE_MAX_TRACKED_ATTACKERS = 32;
 	/** kill_reward: victims need at least this max health; at most one reward per this many ticks. */
 	public static final float KILL_REWARD_MIN_VICTIM_MAX_HEALTH = 4.0F;
 	public static final int KILL_REWARD_COOLDOWN_TICKS = 10;
@@ -149,10 +210,28 @@ public final class AbsorbCaps {
 
 	// ---- behaviors in general ----------------------------------------------------------------------------------
 
-	/** Smallest allowed tick interval of periodic behaviors (e.g. rain / sunlight damage checks). */
+	/** Allowed tick interval of periodic behaviors (e.g. rain / sunlight damage checks); also the longest pause_on_hit. */
 	public static final int BEHAVIOR_MIN_TICK_INTERVAL = 1;
+	public static final int BEHAVIOR_MAX_TICK_INTERVAL = 72000;
 	/** How often the engine re-applies attribute clamps (other modifiers such as sprinting change the final value). */
 	public static final int ATTRIBUTE_RECLAMP_INTERVAL_TICKS = 20;
+	/**
+	 * status_effect permanent mode: applied duration, refreshed when fewer ticks are left (night vision flickers on the
+	 * client below 200 ticks, so it gets longer values); checked every PERMANENT interval, pulse mode every PULSE one.
+	 */
+	public static final int EFFECT_PERMANENT_DURATION_TICKS = 100;
+	public static final int EFFECT_PERMANENT_MIN_LEFT_TICKS = 60;
+	public static final int EFFECT_NIGHT_VISION_DURATION_TICKS = 400;
+	public static final int EFFECT_NIGHT_VISION_MIN_LEFT_TICKS = 220;
+	public static final int EFFECT_PERMANENT_INTERVAL_TICKS = 20;
+	public static final int EFFECT_PULSE_INTERVAL_TICKS = 10;
+
+	// ---- network -----------------------------------------------------------------------------------------------
+
+	/** Longest list accepted from / sent to the network (defensive; sources and traits are far below). */
+	public static final int NET_MAX_LIST_SIZE = 4096;
+	/** Longest source display name synced to clients (must match the name codec of TraitsPayload). */
+	public static final int NET_MAX_NAME_LENGTH = 64;
 
 	// ---- client visuals ----------------------------------------------------------------------------------------
 
@@ -160,6 +239,11 @@ public final class AbsorbCaps {
 	public static final int AURA_PARTICLE_INTERVAL_TICKS = 8;
 	/** Players need this many total trait levels for a full-strength aura. */
 	public static final int AURA_FULL_STRENGTH_LEVELS = 20;
+	/** No aura particles for players farther than this from the local player (blocks). */
+	public static final double AURA_PARTICLE_MAX_DISTANCE = 48.0;
+	/** Widest absorb hint next to the crosshair and widest row of the traits screen (GUI pixels). */
+	public static final int HUD_HINT_MAX_WIDTH = 200;
+	public static final int TRAITS_SCREEN_MAX_ROW_WIDTH = 340;
 
 	// ---- attribute clamps --------------------------------------------------------------------------------------
 
@@ -225,18 +309,4 @@ public final class AbsorbCaps {
 	public static Optional<Clamp> clampFor(String attributeId) {
 		return Optional.ofNullable(CLAMP_BY_ATTRIBUTE.get(attributeId));
 	}
-
-	// ---- Ability caps (fix round 2) ----
-
-	/** Longest sneak_detonate fuse (10 s). */
-	public static final int SNEAK_DETONATE_MAX_FUSE_TICKS = 200;
-	/** Shulker bullet target search radius (shoot_projectile). */
-	public static final double SHULKER_BULLET_RANGE = 16.0;
-	/** Vanilla evoker fang damage: the base of shoot_projectile's evoker_fangs {@code damage} factor. */
-	public static final float EVOKER_FANG_BASE_DAMAGE = 6.0F;
-	/**
-	 * Gravity used to credit an air_jump burst against the fall distance: a burst of vertical speed v can lift the
-	 * player at most v² / (2 g) blocks (vanilla player gravity, drag ignored), and only that much is taken off.
-	 */
-	public static final double AIR_JUMP_FALL_CREDIT_GRAVITY = 0.08;
 }

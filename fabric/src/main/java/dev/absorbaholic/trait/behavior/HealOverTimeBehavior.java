@@ -23,7 +23,7 @@ public final class HealOverTimeBehavior implements Behavior<HealOverTimeBehavior
 	public record Params(LevelValue amount, int interval, Condition condition) {
 		public static final MapCodec<Params> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				LevelValue.CODEC.fieldOf("amount").forGetter(Params::amount),
-				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, 72000).optionalFieldOf("interval", 20).forGetter(Params::interval),
+				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, AbsorbCaps.BEHAVIOR_MAX_TICK_INTERVAL).optionalFieldOf("interval", 20).forGetter(Params::interval),
 				Condition.FIELDS.forGetter(Params::condition)
 		).apply(i, Params::new));
 	}

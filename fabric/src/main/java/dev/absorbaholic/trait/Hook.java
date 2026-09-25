@@ -38,7 +38,8 @@ public enum Hook {
 	MODIFY_FOOD("modifyFood"),
 	ITEM_CONSUMED("onItemConsumed"),
 	EXPERIENCE("experienceFactor"),
-	DURABILITY("durabilityFactor");
+	DURABILITY("durabilityFactor"),
+	KNOCKBACK("knockbackFactor");
 
 	public final String methodName;
 	private final Method method;

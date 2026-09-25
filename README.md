@@ -82,7 +82,7 @@ All of them are data-driven JSON, so datapacks can change, add or remove any of 
 | Grass & Shrubs (`grass`) | block | Common | **Hide in the Grass**: Mob detection range −15/−30/−45 % while sneaking | **Bug Bait**: Detection range for arthropods +30/+60/+100 % | III |
 | Gravel (`gravel`) | block | Common | **Flint Finder**: Luck +0.5/+1/+1.5 | **Pulled Down**: Gravity +10/+20/+30 % | III |
 | Harvest (`harvest`) | block | Common | **Hearty Meals**: All food: saturation +15/+30/+50 % | **Rot-Prone**: Hunger duration +50/+100/+200 % | III |
-| Leaves (`leaves`) | block | Common | **Photosynthesis**: Heals 0.5/0.75/1 HP every 3 s in sunlight | **Light as a Leaf**: Knockback resistance −20/−40/−60 % | III |
+| Leaves (`leaves`) | block | Common | **Photosynthesis**: Heals 0.5/0.75/1 HP every 3 s in sunlight | **Light as a Leaf**: Knockback taken +20/+40/+60 % | III |
 | Masonry (`masonry`) | block | Common | **Reinforced**: Armor toughness +0.5/+1/+1.5; Explosion knockback resistance +10/+20/+30 % | **Concrete Shoes**: Sinks in water (0.015/0.025/0.035 blocks/tick²) | III |
 | Melon (`melon`) | block | Common | **Juicy**: Heals 0.25/0.5/0.75 HP every 5 s | **Squishy**: Fall damage +20/+40/+60 % | III |
 | Moss & Vines (`moss`) | block | Common | **Mossy Steps**: Sneaking speed +0.1/+0.2/+0.3 | **Overgrown**: Movement speed −3/−6/−9 % | III |
@@ -129,9 +129,9 @@ All of them are data-driven JSON, so datapacks can change, add or remove any of 
 | Nether Quartz (`quartz`) | block | Uncommon | **Sharp Edges**: Attack damage +0.5/+1/+1.5 | **Pincushion**: Projectile damage +15/+30/+45 % | III |
 | Prismarine (`prismarine`) | block | Uncommon | **Aqua Affinity**: Underwater mining speed +0.3/+0.5/+0.8 | **Sea-Bound**: Hunger drain +15/+30/+50 % out of water | III |
 | Redstone (`redstone`) | block | Uncommon | **Overclocked**: Movement speed +5/+10/+15 % | **Short Circuit**: 0.5/0.75/1 HP per s when wet | III |
-| Slime Block (`slime_block`) | block | Uncommon | **Bouncy**: Bounciness +0.3/+0.5/+0.7; Fall damage −30/−60/−90 %; Jump strength +5/+10/+15 % | **Wobbly**: Knockback resistance −50/−75/−100 % | III |
+| Slime Block (`slime_block`) | block | Uncommon | **Bouncy**: Bounciness +0.3/+0.5/+0.7; Fall damage −30/−60/−90 %; Jump strength +5/+10/+15 % | **Wobbly**: Knockback taken +50/+75/+100 % | III |
 | Soul Sand (`soul_sand`) | block | Uncommon | **Soul Speed**: Movement efficiency +30/+60/+100 %; Speed I/II/III on soul sand/soil | **Soul Drag**: Movement speed −4/−8/−12 % | III |
-| Sponge (`sponge`) | block | Uncommon | **Absorbent**: Oxygen bonus +2/+5/+12 | **Waterlogged**: Hunger drain +100/+200/+300 % when wet | III |
+| Sponge (`sponge`) | block | Uncommon | **Absorbent**: Oxygen bonus +2/+5/+8 | **Waterlogged**: Hunger drain +100/+200/+300 % when wet | III |
 | Sulfur (`sulfur`) | block | Uncommon | **Noxious Fumes**: Gives hostile mobs within 2/3/4 blocks Weakness for 3 s | **Rotten-Egg Stench**: Scares off Cow, Pig +10 more within 8/12/16 blocks | III |
 | TNT (`tnt`) | block | Uncommon | **Kaboom Punch**: Attack knockback +0.5/+1/+1.5 | **Volatile**: Fire damage +50/+100/+150 % | III |
 | Armadillo (`armadillo`) | mob | Uncommon | **Roll Up**: Damage taken −20/−35/−50 % while sneaking | **Undead Jitters**: Slowness I/II/III near undead (8 blocks) | III |
@@ -148,13 +148,13 @@ All of them are data-driven JSON, so datapacks can change, add or remove any of 
 | Guardian (`guardian`) | mob | Uncommon | **Spiked Hide**: Melee attackers take 1/2/3 damage (30/50/70 % chance) | **Flop**: Fall damage +50/+100/+150 % | III |
 | Hoglin (`hoglin`) | mob | Uncommon | **Tusk Toss**: Attack knockback +0.5/+1/+1.5 | **Piglin Prey**: Hunted by Piglin & Piglin Brute within 16/24/32 blocks | III |
 | Horse (`horse`) | mob | Uncommon | **Gallop**: Movement speed +6/+12/+18 % | **Heavy Hooves**: Fall damage +25/+50/+75 % | III |
-| Husk (`husk`) | mob | Uncommon | **Hunger Touch**: Melee hits inflict Hunger I/I/II for 5/8/11 s | **Crumbling**: Knockback resistance −15/−30/−45 % | III |
+| Husk (`husk`) | mob | Uncommon | **Hunger Touch**: Melee hits inflict Hunger I/I/II for 5/8/11 s | **Crumbling**: Knockback taken +15/+30/+45 % | III |
 | Illagers (`illager`) | mob | Uncommon | **Raider's Edge**: Attack damage +0.5/+1/+1.5; Projectile damage dealt +10/+20/+30 % | **Golem's Grudge**: Hunted by Iron Golem within 16/24/32 blocks | III |
 | Llama (`llama`) | mob | Uncommon | **Spit Take**: Sneak-swing: 1× llama spit (2/3/4 damage, cooldown 3/2/1 s) | **Picky Eater**: All food: food value −15/−30/−45 % | III |
 | Magma Cube (`magma_cube`) | mob | Uncommon | **Lava Bounce**: Jump strength +10/+20/+30 %; Fall damage −20/−40/−60 %; Immune to magma floor damage | **Cools Off**: Weakness I/II/III in water | III |
 | Mooshroom (`mooshroom`) | mob | Uncommon | **Stew Belly**: Mushroom Stew, Suspicious Stew +2 more: food value +50/+100/+200 % | **Lightning Magnet**: 0.5/1/1.5 HP per s in thunderstorms and under open sky; Lightning damage +100/+200/+300 % | III |
 | Nautilus (`nautilus`) | mob | Uncommon | **Nautilus Breath**: Water movement efficiency +10/+20/+30 %; Breath of the Nautilus underwater | **Drowned Prey**: Detection range for Drowned +50/+100/+200 % | III |
-| Ocelot (`ocelot`) | mob | Uncommon | **Jungle Sprinter**: Movement speed +5/+10/+15 % | **Skittish**: Knockback resistance −20/−40/−60 % | III |
+| Ocelot (`ocelot`) | mob | Uncommon | **Jungle Sprinter**: Movement speed +5/+10/+15 % | **Skittish**: Knockback taken +20/+40/+60 % | III |
 | Parched (`parched`) | mob | Uncommon | **Parching Shot**: Projectile hits inflict Weakness I/I/II for 3/5/7 s | **Eternal Thirst**: Hunger drain +20/+40/+60 % when dry | III |
 | Parrot (`parrot`) | mob | Uncommon | **Flutter**: Gravity −10/−20/−30 %; Fall damage −20/−40/−60 % | **Chatterbox**: Mob detection range +20/+40/+60 %; Eating cookies gives Poison I/I/II for 5/8/10 s | III |
 | Piglin (`piglin`) | mob | Uncommon | **Piglin Pal**: Attack damage +0.5/+1/+1.5; Ignored by Piglin | **Zombifying**: Healing −20/−40/−60 % outside the Nether | III |
@@ -172,13 +172,13 @@ All of them are data-driven JSON, so datapacks can change, add or remove any of 
 | Chorus (`chorus`) | block | Rare | **Chorus Hop**: Sneak-jump: random teleport, up to 8/12/16 blocks (cooldown 10/8/6 s) | **Unstable Matter**: When hurt: 10/20/30 % chance of a random teleport (4/6/8 blocks) | III |
 | Crying Obsidian (`crying_obsidian`) | block | Rare | **Last Stand**: Damage taken −20/−35/−50 % at low health | **Teary Eyes**: Blindness for 2/2.5/3 s every 6/5/4 s at low health | III |
 | Diamond (`diamond`) | block | Rare | **Diamond Skin**: Armor +3/+5/+7; Armor toughness +1/+2/+3 | **Brittle Brilliance**: Explosion damage +50/+100/+150 % | III |
-| Emerald (`emerald`) | block | Rare | **Haggler**: Hero of the Village I/II/III | **Wanted Poster**: Bad Omen I/II/III | III |
+| Emerald (`emerald`) | block | Rare | **Haggler**: Hero of the Village I/II/III | **Wanted Poster**: Hunted by Iron Golem within 16/24/32 blocks | III |
 | Obsidian (`obsidian`) | block | Rare | **Blast Proof**: Explosion knockback resistance +30/+60/+100 %; Explosion damage −40/−60/−75 % | **Dense**: Movement speed −10/−20/−30 % | III |
 | Sculk (`sculk`) | block | Rare | **Soul Harvest**: Kills heal 1/2/3 HP | **Soul Tax**: XP from orbs −25/−50/−75 % | III |
 | Allay (`allay`) | mob | Rare | **Collector**: Pulls items within 4/6/8 blocks | **Delicate**: Max health −2/−4/−6 HP | III |
 | Bee (`bee`) | mob | Rare | **Buzz Hover**: 1/2/3 mid-air jumps | **Nectar Addict**: Hunger drain +30/+60/+100 %; 1/2/3 HP per s when starving | III |
 | Blaze (`blaze`) | mob | Rare | **Blaze Barrage**: Sneak-swing: 1/2/3× small fireball (cooldown 2/1.5/1 s); Fire damage −40/−60/−75 % | **Snowball Bane**: Snowball hits deal 2/3/4 extra damage; 0.5/1/1.5 HP per s when wet | III |
-| Breeze (`breeze`) | mob | Rare | **Wind Burst**: Sneak-swing: 1× wind charge (cooldown 3/2/1.5 s) | **Gust-Blown**: Knockback resistance −30/−60/−90 % | III |
+| Breeze (`breeze`) | mob | Rare | **Wind Burst**: Sneak-swing: 1× wind charge (cooldown 3/2/1.5 s) | **Gust-Blown**: Knockback taken +30/+60/+90 % | III |
 | Creaking (`creaking`) | mob | Rare | **Resin Heart**: Heals 0.5/1/1.5 HP every 2 s at night | **Sun-Stiff**: Slowness I/II/III in sunlight | III |
 | Creeper (`creeper`) | mob | Rare | **Controlled Blast**: Double-tap sneak: explode (power 2/2.5/3, no block damage, cooldown 30/25/20 s); Explosion damage −20/−35/−50 % | **Cat Phobia**: Slowness I/II/III near Cat & Ocelot (10 blocks) | III |
 | Dolphin (`dolphin`) | mob | Rare | **Dolphin's Grace**: Oxygen bonus +1/+2/+4; Dolphin's Grace in water | **Air Breather**: Drowning damage +50/+100/+200 % | III |
@@ -221,12 +221,13 @@ so a datapack can't break it either. The numbers are generated from
 | Pure / mutation chance | 2 % / 15 % per absorption |
 | Source max level | default 3, allowed 1–5 |
 | Trait slots per player | default 20, `/absorbaholic max` 1–64 |
-| Weakness damage | at most 8 HP per 20 ticks; one hit never takes you from full health below 1 HP |
+| Weakness damage | at most 8 HP (and at most your max health − 1) per 20 ticks, weakness-caused burning and starvation included; if you were at full health during that time, weaknesses never take you below 1 HP |
 | Damage taken (all traits combined) | never below ×0.25 (max 75 % reduction); weaknesses at most ×3 |
 | Immunities | only fire, fall, drowning, freezing, magma floor, cactus, berry bush, lightning and ender pearl damage; never `/kill`, the void or generic damage |
 | Damage dealt | ×0.5–×2 |
 | Healing | ×0.25–×2 |
 | Hunger drain | ×0.25–×5 |
+| Knockback taken | ×0.5–×3 |
 | XP from orbs | ×0.25–×2.5 |
 | Item wear | ×0.5–×3 |
 | Mob detection range | ×0.25–×3, provoking at most 48 blocks away |
@@ -407,7 +408,8 @@ description.
 - **Absorbing the Ender Dragon** counts as killing it: the exit portal and the egg appear as usual.
 - **Other attribute mods stack with ours.** The clamps apply to the final value, so our modifiers shrink to keep
   it in range. If another mod (or an effect) already pushed a value past a clamp, we just don't push it further.
-- **Weakness damage is gated, not delayed.** Anything over 8 HP per second is dropped for good.
+- **Weakness damage is gated, not delayed.** Anything over 8 HP per second (less with a low max health) is
+  dropped for good, and so is anything that would take a player who was at full health that second below 1 HP.
 - **Keep-on-death off** means a death loses every source; the dragon egg wipes them even with it on.
 
 ## Repository layout

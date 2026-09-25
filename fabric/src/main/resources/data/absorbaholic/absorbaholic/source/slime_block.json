@@ -26,11 +26,10 @@
   },
   "weakness": {
     "key": "wobbly",
-    "attributes": [
+    "behaviors": [
       {
-        "attribute": "minecraft:knockback_resistance",
-        "operation": "add_value",
-        "amount": [-0.5, -0.75, -1.0]
+        "type": "absorbaholic:knockback_multiplier",
+        "multiplier": [1.5, 1.75, 2.0]
       }
     ]
   }

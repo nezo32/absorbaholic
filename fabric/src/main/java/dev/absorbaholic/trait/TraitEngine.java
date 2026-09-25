@@ -51,6 +51,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -94,8 +95,6 @@ import org.jspecify.annotations.Nullable;
  * {@link #wipesOnDeath} still sees the dragon egg from ServerPlayerEvents.COPY_FROM.
  */
 public final class TraitEngine {
-	/** At most one sneak_swing trigger per this many ticks (the 26.2 client sends a swing on every click). */
-	private static final int SWING_INTERVAL_TICKS = 4;
 	private static final Identifier STATE_KEY = Absorbaholic.id("engine");
 	private static final Identifier RESPAWN_PHASE = Absorbaholic.id("engine_after_respawn");
 	private static final ResourceKey<DamageType> WEAKNESS = WeaknessDamage.TYPE;
@@ -123,6 +122,7 @@ public final class TraitEngine {
 		ServerPlayerEvents.AFTER_RESPAWN.addPhaseOrdering(Event.DEFAULT_PHASE, RESPAWN_PHASE);
 		ServerPlayerEvents.AFTER_RESPAWN.register(RESPAWN_PHASE, (oldPlayer, newPlayer, alive) -> onRespawn(newPlayer));
 		ServerPlayerEvents.JOIN.register(TraitEngine::markDirty);
+		ServerPlayerEvents.COPY_FROM.register(TraitEngine::carryHealth);
 		ServerEntityLevelChangeEvents.AFTER_PLAYER_CHANGE_LEVEL.register((player, origin, destination) -> markDirty(player));
 		ServerLifecycleEvents.END_DATA_PACK_RELOAD.register((server, resources, success) -> {
 			for (ServerPlayer p : server.getPlayerList().getPlayers()) markDirty(p);
@@ -258,6 +258,8 @@ public final class TraitEngine {
 		if (rt.dirty) rebuild(p, rt, eligible);
 		ActiveSet set = rt.active;
 		if (!eligible || set.isEmpty()) return;
+		rt.damageGate.observe(now, p.getHealth(), p.getMaxHealth());
+		if (rt.weaknessFireUntil > now && p.getRemainingFireTicks() <= 0) rt.weaknessFireUntil = Long.MIN_VALUE / 2; // put out
 
 		if (input.jump() && !prev.jump()) {
 			boolean airborne = Condition.PREDICATES.get("airborne").test(p, Condition.ALWAYS);
@@ -328,7 +330,9 @@ public final class TraitEngine {
 		}
 		deactivateAll(p, removed.toArray(new ActiveBehavior<?>[0]));
 
+		float maxBefore = p.getMaxHealth();
 		AttributeApplier.apply(p, traits, active);
+		restoreHealth(p, rt, maxBefore);
 		rt.active = set;
 		rt.wasActive = active;
 		for (ActiveBehavior<?> a : added) {
@@ -425,6 +429,44 @@ public final class TraitEngine {
 		}
 	}
 
+	/**
+	 * Review m3: health above the vanilla max (max_health traits) survives a relog and an End exit. Vanilla clamps the
+	 * loaded / copied health to the max WITHOUT our transient modifiers; the raw value was kept in
+	 * {@code PlayerRuntime.pendingHealth} (LivingEntityMixin reads the saved {@code Health} on load, {@link #carryHealth}
+	 * on an End exit) and is restored, clamped to the new max, right after the first rebuild applied our modifiers, but
+	 * only while the player still has the clamped health (it was not hurt in between). Consumed either way.
+	 */
+	private static void restoreHealth(ServerPlayer p, PlayerRuntime rt, float maxBefore) {
+		float pending = rt.pendingHealth;
+		rt.pendingHealth = Float.NaN;
+		if (!Float.isFinite(pending) || !(pending > p.getHealth()) || p.getHealth() < maxBefore - 1.0E-4F) return;
+		float restored = Math.min(pending, p.getMaxHealth());
+		if (restored > p.getHealth()) p.setHealth(restored);
+	}
+
+	/** COPY_FROM: an End exit ({@code alive}) keeps the old entity's health for {@link #restoreHealth}. */
+	private static void carryHealth(ServerPlayer oldPlayer, ServerPlayer newPlayer, boolean alive) {
+		if (!alive || newPlayer instanceof FakePlayer) return;
+		try {
+			float health = oldPlayer.getHealth();
+			// Fabric may hand the new entity the old runtime object afterwards (AFTER_RESPAWN): set both
+			PlayerData.runtime(oldPlayer).pendingHealth = health;
+			PlayerData.runtime(newPlayer).pendingHealth = health;
+		} catch (Throwable t) {
+			failedEngine("copyHealth", t);
+		}
+	}
+
+	/** LivingEntityMixin: the raw {@code Health} a loading player was saved with (before vanilla clamps it). */
+	public static void onHealthLoaded(ServerPlayer player, float savedHealth) {
+		if (player instanceof FakePlayer || !Float.isFinite(savedHealth)) return;
+		try {
+			PlayerData.runtime(player).pendingHealth = savedHealth;
+		} catch (Throwable t) {
+			failedEngine("loadHealth", t);
+		}
+	}
+
 	/** Logout: undo every entry's side effects now (the player is saved right after). */
 	private static void deactivate(@Nullable ServerPlayer p) {
 		if (p == null || p instanceof FakePlayer) return;
@@ -497,10 +539,17 @@ public final class TraitEngine {
 		return false;
 	}
 
-	/** LivingEntityMixin (victim is the player): trait floor, weakness extra through the damage gate. */
+	/**
+	 * LivingEntityMixin (victim is the player): trait floor, weakness extra through the damage gate. Vanilla damage a
+	 * weakness caused ({@link #weaknessCaused}: burning from a weakness ignition, starvation while a weakness drains
+	 * hunger) goes through the gate as a whole, like direct weakness damage.
+	 */
 	public static float modifyIncomingDamage(ServerPlayer player, DamageSource source, float amount) {
-		ActiveBehavior<?>[] entries = active(player).forHook(Hook.INCOMING_DAMAGE);
-		if (entries.length == 0 || !(amount > 0.0F) || !isActive(player)) return amount;
+		if (!(amount > 0.0F)) return amount;
+		PlayerRuntime rt = PlayerData.runtime(player);
+		ActiveBehavior<?>[] entries = rt.active.forHook(Hook.INCOMING_DAMAGE);
+		boolean caused = weaknessCaused(player, rt, source);
+		if (entries.length == 0 && !caused || !isActive(player)) return amount;
 		// never touched: our own weakness damage (gated already), /kill and the void
 		if (source.is(WEAKNESS) || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return amount;
 		// damage vanilla is about to drop anyway must not spend the gate budget
@@ -517,16 +566,64 @@ public final class TraitEngine {
 			}
 		}
 		FactorMath.Incoming in = FactorMath.incoming(amount, traits, weaknesses);
+		if (caused) return rt.damageGate.allowDirect(now(player), in.base() + in.extra(), player.getHealth(), player.getMaxHealth());
 		float extra = in.extra() > 0.0F
-				? PlayerData.runtime(player).damageGate.allowExtra(now(player), in.extra(), in.base(), player.getHealth(), player.getMaxHealth())
+				? rt.damageGate.allowExtra(now(player), in.extra(), in.base(), player.getHealth(), player.getMaxHealth())
 				: 0.0F;
 		return in.base() + extra;
+	}
+
+	/**
+	 * Review m2: vanilla damage that a weakness caused and that is therefore charged to the weakness damage gate:
+	 * <ul>
+	 * <li>{@code minecraft:on_fire} while a weakness ignition is burning ({@link #noteWeaknessIgnition}, e.g. sunburn);</li>
+	 * <li>{@code minecraft:starve} while an active weakness drains hunger ({@code hunger_drain}) or cuts food
+	 *     ({@code food_modifier}), i.e. any weakness entry with the exhaustion or food hook.</li>
+	 * </ul>
+	 */
+	private static boolean weaknessCaused(ServerPlayer player, PlayerRuntime rt, DamageSource source) {
+		if (source.is(DamageTypes.ON_FIRE)) return now(player) <= rt.weaknessFireUntil;
+		if (!source.is(DamageTypes.STARVE)) return false;
+		for (ActiveBehavior<?> a : rt.active.forHook(Hook.EXHAUSTION)) {
+			if (a.weakness()) return true;
+		}
+		for (ActiveBehavior<?> a : rt.active.forHook(Hook.MODIFY_FOOD)) {
+			if (a.weakness()) return true;
+		}
+		return false;
+	}
+
+	/**
+	 * A weakness behavior set the player on fire for {@code ticks}: the burning until then counts as weakness damage
+	 * (see {@link #weaknessCaused}).
+	 */
+	public static void noteWeaknessIgnition(ServerPlayer player, int ticks) {
+		if (ticks <= 0) return;
+		PlayerRuntime rt = PlayerData.runtime(player);
+		rt.weaknessFireUntil = Math.max(rt.weaknessFireUntil, now(player) + ticks);
+	}
+
+	/** LivingEntityMixin: {@code LivingEntity#knockback} strength the player is about to take. */
+	public static double modifyKnockback(ServerPlayer player, @Nullable DamageSource source, double strength) {
+		ActiveBehavior<?>[] entries = active(player).forHook(Hook.KNOCKBACK);
+		if (entries.length == 0 || !(strength > 0.0) || !isActive(player)) return strength;
+		float product = 1.0F;
+		for (ActiveBehavior<?> a : entries) {
+			try {
+				product *= a.knockbackFactor(player, source, strength);
+			} catch (Throwable t) {
+				failed(a, Hook.KNOCKBACK, t);
+			}
+		}
+		return strength * FactorMath.knockback(product);
 	}
 
 	/** LivingEntityMixin (attacker is the player). */
 	public static float modifyOutgoingDamage(ServerPlayer attacker, LivingEntity target, DamageSource source, float amount) {
 		ActiveBehavior<?>[] entries = active(attacker).forHook(Hook.OUTGOING_DAMAGE);
 		if (entries.length == 0 || !(amount > 0.0F) || attacker == target || !isActive(attacker)) return amount;
+		// review m1: weakness damage credited to a player was gated already; /kill and the void are never scaled
+		if (source.is(WEAKNESS) || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) return amount;
 		float product = 1.0F;
 		for (ActiveBehavior<?> a : entries) {
 			try {
@@ -639,7 +736,7 @@ public final class TraitEngine {
 
 	/**
 	 * ServerGamePacketListenerImplMixin: the player swung (26.2 swing packet / 26.3 punch packet). A sneak_swing trigger
-	 * when sneaking with no block within reach (so never while mining), at most once per {@value #SWING_INTERVAL_TICKS}
+	 * when sneaking with no block within reach (so never while mining), at most once per {@link AbsorbCaps#SNEAK_SWING_MIN_INTERVAL_TICKS}
 	 * ticks; the target is the entity under the crosshair within reach, if any.
 	 */
 	public static void onSwing(ServerPlayer player) {
@@ -647,7 +744,7 @@ public final class TraitEngine {
 			if (!player.isShiftKeyDown() || !isActive(player) || !active(player).any(Hook.SNEAK_SWING)) return;
 			EngineState st = state(PlayerData.runtime(player));
 			long now = now(player);
-			if (now - st.lastSwingTick < SWING_INTERVAL_TICKS) return;
+			if (now - st.lastSwingTick < AbsorbCaps.SNEAK_SWING_MIN_INTERVAL_TICKS) return;
 			if (player.pick(player.blockInteractionRange(), 1.0F, false).getType() == HitResult.Type.BLOCK) return;
 			st.lastSwingTick = now;
 			fireTrigger(player, Hook.SNEAK_SWING, pickEntity(player));

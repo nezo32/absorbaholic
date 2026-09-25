@@ -17,8 +17,9 @@ import org.jspecify.annotations.Nullable;
  * The only way behaviors deal direct weakness damage: {@code absorbaholic:weakness} damage type
  * (data/absorbaholic/damage_type/weakness.json: message_id absorbaholic.weakness, scaling never, exhaustion 0; tags
  * bypasses_armor, bypasses_shield, no_knockback; death message
- * {@code death.attack.absorbaholic.weakness}), amount limited by the player's {@code DamageGate} (at most 8 HP per
- * rolling 20 ticks, never below 1 HP from full health in one hit). The engine skips weakness multipliers for this
+ * {@code death.attack.absorbaholic.weakness}), amount limited by the player's {@code DamageGate} (at most
+ * min(8, max health - 1) HP per rolling 20 ticks; a player who was at full health in that window is never taken below
+ * 1 HP). The engine skips weakness multipliers for this
  * damage type, so it is never amplified twice. Does nothing while the player is not
  * {@linkplain TraitEngine#isActive active} (creative / spectator players are never hurt by weaknesses).
  */

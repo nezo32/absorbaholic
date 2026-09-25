@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.absorbaholic.core.AbsorbCaps;
 import dev.absorbaholic.core.LevelValue;
 import dev.absorbaholic.player.PlayerData;
 import dev.absorbaholic.player.PlayerRuntime;
@@ -41,14 +42,13 @@ import org.jspecify.annotations.Nullable;
  * <pre>{"type": "absorbaholic:status_effect", "effect": "minecraft:speed", "amplifier": [-1, 0, 1]}</pre>
  */
 public final class StatusEffectBehavior implements Behavior<StatusEffectBehavior.Params> {
-	/** Permanent mode: applied duration and the refresh threshold (checks run every {@link #PERMANENT_INTERVAL} ticks). */
-	static final int PERMANENT_DURATION = 100;
-	static final int PERMANENT_MIN_LEFT = 60;
-	/** Night vision flickers on the client below 200 ticks. */
-	static final int NIGHT_VISION_DURATION = 400;
-	static final int NIGHT_VISION_MIN_LEFT = 220;
-	static final int PERMANENT_INTERVAL = 20;
-	static final int PULSE_INTERVAL = 10;
+	/** Permanent mode: applied duration and refresh threshold; night vision flickers on the client below 200 ticks. */
+	static final int PERMANENT_DURATION = AbsorbCaps.EFFECT_PERMANENT_DURATION_TICKS;
+	static final int PERMANENT_MIN_LEFT = AbsorbCaps.EFFECT_PERMANENT_MIN_LEFT_TICKS;
+	static final int NIGHT_VISION_DURATION = AbsorbCaps.EFFECT_NIGHT_VISION_DURATION_TICKS;
+	static final int NIGHT_VISION_MIN_LEFT = AbsorbCaps.EFFECT_NIGHT_VISION_MIN_LEFT_TICKS;
+	static final int PERMANENT_INTERVAL = AbsorbCaps.EFFECT_PERMANENT_INTERVAL_TICKS;
+	static final int PULSE_INTERVAL = AbsorbCaps.EFFECT_PULSE_INTERVAL_TICKS;
 
 	public record Params(Holder<MobEffect> effect, LevelValue amplifier, Optional<LevelValue> interval, Optional<LevelValue> duration,
 			Condition condition) {

@@ -3,6 +3,7 @@ package dev.absorbaholic.trait.behavior;
 import java.util.List;
 import java.util.Set;
 
+import dev.absorbaholic.core.AbsorbCaps;
 import dev.absorbaholic.trait.TargetFilter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,9 +30,6 @@ import net.minecraft.world.phys.AABB;
  * scan, and how a mob is made to target the player ("provoke") or to forget it again ("calm"). Server thread only.
  */
 final class MobRules {
-	/** At most this many mobs are handled per scan (bounded work even in a mob farm). */
-	static final int MAX_MOBS_PER_SCAN = 48;
-
 	private MobRules() {}
 
 	/** Ender Dragon and Wither. */
@@ -74,7 +72,7 @@ final class MobRules {
 		AABB box = player.getBoundingBox().inflate(radius);
 		double maxSq = radius * radius;
 		List<T> found = player.level().getEntitiesOfClass(type, box, m -> m.distanceToSqr(player) <= maxSq && filter.test(m));
-		return found.size() > MAX_MOBS_PER_SCAN ? found.subList(0, MAX_MOBS_PER_SCAN) : found;
+		return found.size() > AbsorbCaps.MOB_SCAN_MAX_MOBS ? found.subList(0, AbsorbCaps.MOB_SCAN_MAX_MOBS) : found;
 	}
 
 	/** The mob's current target, including one it is not allowed to keep (so a stale target can be cleared). */

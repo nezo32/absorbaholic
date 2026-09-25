@@ -89,7 +89,7 @@ public final class Condition {
 			Codec.STRING.listOf().optionalFieldOf("condition_any", List.of()).forGetter(c -> c.any),
 			STRING_OR_LIST.optionalFieldOf("condition_blocks", List.of()).forGetter(c -> c.blocks),
 			STRING_OR_LIST.optionalFieldOf("condition_entities", List.of()).forGetter(c -> c.entities),
-			Codec.DOUBLE.optionalFieldOf("condition_radius", 8.0).forGetter(c -> c.radius)
+			Codec.DOUBLE.optionalFieldOf("condition_radius", AbsorbCaps.CONDITION_DEFAULT_RADIUS).forGetter(c -> c.radius)
 	).apply(i, Condition::new)).validate(Condition::validate);
 
 	private final List<String> all;

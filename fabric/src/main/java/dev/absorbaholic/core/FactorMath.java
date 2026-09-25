@@ -44,6 +44,11 @@ public final class FactorMath {
 		return clamp(product, AbsorbCaps.DURABILITY_FACTOR_MIN, AbsorbCaps.DURABILITY_FACTOR_MAX);
 	}
 
+	/** Knockback taken (knockback_multiplier): traits may reduce it, weaknesses amplify it, within the caps. */
+	public static float knockback(float product) {
+		return clamp(product, AbsorbCaps.KNOCKBACK_FACTOR_MIN, AbsorbCaps.KNOCKBACK_FACTOR_MAX);
+	}
+
 	public static double visibility(double product) {
 		return Math.clamp(Double.isNaN(product) ? 1.0 : product, AbsorbCaps.VISIBILITY_FACTOR_MIN, AbsorbCaps.VISIBILITY_FACTOR_MAX);
 	}

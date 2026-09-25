@@ -20,9 +20,10 @@
     "key": "wanted_poster",
     "behaviors": [
       {
-        "type": "absorbaholic:status_effect",
-        "effect": "minecraft:bad_omen",
-        "amplifier": [0, 1, 2]
+        "type": "absorbaholic:mob_attitude",
+        "entities": ["minecraft:iron_golem"],
+        "attitude": "hostile",
+        "radius": [16, 24, 32]
       }
     ]
   }

@@ -21,7 +21,7 @@ import net.minecraft.util.RandomSource;
  */
 public final class AuraParticles {
 	/** No particles for players farther than this from the local player (blocks). */
-	public static final double MAX_DISTANCE = 48.0;
+	public static final double MAX_DISTANCE = AbsorbCaps.AURA_PARTICLE_MAX_DISTANCE;
 	/** Rate divisor for your own aura while in first person. */
 	private static final int FIRST_PERSON_RATE_DIVISOR = 3;
 	/** Up to this share of white is mixed into each particle's color. */

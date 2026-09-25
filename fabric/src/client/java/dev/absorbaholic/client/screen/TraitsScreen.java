@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import dev.absorbaholic.client.ClientState;
+import dev.absorbaholic.core.AbsorbCaps;
 import dev.absorbaholic.core.SourceKind;
 import dev.absorbaholic.core.Tier;
 import dev.absorbaholic.net.TraitsPayload;
@@ -54,7 +55,7 @@ import org.jspecify.annotations.Nullable;
 public class TraitsScreen extends Screen {
 	/** Row geometry (GUI pixels). */
 	private static final int ROW_HEIGHT = 30;
-	private static final int MAX_ROW_WIDTH = 340;
+	private static final int MAX_ROW_WIDTH = AbsorbCaps.TRAITS_SCREEN_MAX_ROW_WIDTH;
 	private static final int ICON_X = 7;
 	private static final int TEXT_X = 29;
 	/** Text colors (ARGB: alpha is mandatory). */

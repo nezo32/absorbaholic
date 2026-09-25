@@ -24,12 +24,6 @@ import net.minecraft.world.phys.Vec3;
  * <pre>{"type": "absorbaholic:item_magnet", "radius": [4, 6, 8]}</pre>
  */
 public final class ItemMagnetBehavior implements Behavior<ItemMagnetBehavior.Params> {
-	static final int INTERVAL = 5;
-	/** Items the player threw are left alone for this long (so dropping an item works). */
-	static final int OWN_THROW_TICKS = 40;
-	/** At most this many items are pulled per pulse. */
-	static final int MAX_ITEMS = 64;
-
 	public record Params(LevelValue radius, Condition condition) {
 		public static final MapCodec<Params> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				LevelValue.CODEC.fieldOf("radius").forGetter(Params::radius),
@@ -41,7 +35,7 @@ public final class ItemMagnetBehavior implements Behavior<ItemMagnetBehavior.Par
 
 	@Override
 	public int tickInterval(Params p) {
-		return INTERVAL;
+		return AbsorbCaps.ITEM_MAGNET_INTERVAL_TICKS;
 	}
 
 	@Override
@@ -53,7 +47,7 @@ public final class ItemMagnetBehavior implements Behavior<ItemMagnetBehavior.Par
 		int n = 0;
 		for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, player.getBoundingBox().inflate(radius),
 				e -> e.isAlive() && e.distanceToSqr(center) <= maxSq && canPickUp(e, player))) {
-			if (++n > MAX_ITEMS) break;
+			if (++n > AbsorbCaps.ITEM_MAGNET_MAX_ITEMS) break;
 			Vec3 delta = center.subtract(item.position());
 			double distance = delta.length();
 			if (distance < 1.0E-3) continue;
@@ -64,7 +58,7 @@ public final class ItemMagnetBehavior implements Behavior<ItemMagnetBehavior.Par
 
 	private static boolean canPickUp(ItemEntity item, ServerPlayer player) {
 		if (item.hasPickUpDelay()) return false;
-		if (item.getOwner() == player && item.getAge() < OWN_THROW_TICKS) return false;
+		if (item.getOwner() == player && item.getAge() < AbsorbCaps.ITEM_MAGNET_OWN_THROW_TICKS) return false;
 		ItemStack stack = item.getItem();
 		Inventory inventory = player.getInventory();
 		return !stack.isEmpty() && (inventory.getFreeSlot() >= 0 || inventory.getSlotWithRemainingSpace(stack) >= 0);

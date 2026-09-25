@@ -47,10 +47,10 @@ public final class FlightBehavior implements Behavior<FlightBehavior.Params> {
 				Condition.FIELDS.forGetter(Params::condition)
 		).apply(i, Params::new));
 
-		/** Flying speed at {@code level}: 0.001 .. 1 (vanilla creative 0.05). */
+		/** Flying speed at {@code level}: FLIGHT_MIN_SPEED .. FLIGHT_MAX_SPEED (vanilla creative 0.05). */
 		public float speedAt(int level) {
 			double s = AbilitySupport.at(speed, level);
-			return (float) Math.min(1.0, Math.max(0.001, s));
+			return (float) Math.min(AbsorbCaps.FLIGHT_MAX_SPEED, Math.max(AbsorbCaps.FLIGHT_MIN_SPEED, s));
 		}
 	}
 

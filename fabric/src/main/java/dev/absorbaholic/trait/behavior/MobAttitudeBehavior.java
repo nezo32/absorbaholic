@@ -50,17 +50,6 @@ import net.minecraft.world.phys.Vec3;
  * <pre>{"type": "absorbaholic:mob_attitude", "entities": ["#absorbaholic:fears_golem"], "attitude": "flee", "radius": [4, 6, 8], "pause_on_hit": 100}</pre>
  */
 public final class MobAttitudeBehavior implements Behavior<MobAttitudeBehavior.Params> {
-	static final int HOSTILE_INTERVAL = 20;
-	static final int FLEE_INTERVAL = 10;
-	/** Flee pathing: {@code AvoidEntityGoal}'s random position away from the player and the ×1.2 sprint speed. */
-	static final int FLEE_HORIZONTAL = 16;
-	static final int FLEE_VERTICAL = 7;
-	static final double FLEE_SPEED = 1.2;
-	/** Ignore: revenge memory. */
-	static final int REVENGE_TICKS = 200;
-	static final double REVENGE_RADIUS = 16.0;
-	static final int REVENGE_MAX_HITS = 16;
-
 	/** The attitude of the matching mobs. */
 	public enum Attitude implements StringRepresentable {
 		HOSTILE("hostile"),
@@ -85,7 +74,7 @@ public final class MobAttitudeBehavior implements Behavior<MobAttitudeBehavior.P
 				TargetFilter.CODEC.fieldOf("entities").forGetter(Params::entities),
 				Attitude.CODEC.fieldOf("attitude").forGetter(Params::attitude),
 				LevelValue.CODEC.optionalFieldOf("radius").forGetter(Params::radius),
-				Codec.intRange(0, 72000).optionalFieldOf("pause_on_hit", 0).forGetter(Params::pauseOnHit),
+				Codec.intRange(0, AbsorbCaps.BEHAVIOR_MAX_TICK_INTERVAL).optionalFieldOf("pause_on_hit", 0).forGetter(Params::pauseOnHit),
 				Condition.FIELDS.forGetter(Params::condition)
 		).apply(i, Params::new)).validate(Params::validate);
 
@@ -107,8 +96,8 @@ public final class MobAttitudeBehavior implements Behavior<MobAttitudeBehavior.P
 	@Override
 	public int tickInterval(Params p) {
 		return switch (p.attitude()) {
-			case HOSTILE -> HOSTILE_INTERVAL;
-			case FLEE -> FLEE_INTERVAL;
+			case HOSTILE -> AbsorbCaps.MOB_HOSTILE_INTERVAL_TICKS;
+			case FLEE -> AbsorbCaps.MOB_FLEE_INTERVAL_TICKS;
 			case IGNORE -> 200; // nothing to do periodically
 		};
 	}
@@ -145,7 +134,7 @@ public final class MobAttitudeBehavior implements Behavior<MobAttitudeBehavior.P
 			if (p.pauseOnHit() > 0) state.pausedUntil = now + p.pauseOnHit();
 		} else {
 			state.hits.addLast(new EntryStates.Hit(target.getUUID(), target.getType(), target.position(), now));
-			while (state.hits.size() > REVENGE_MAX_HITS) state.hits.removeFirst();
+			while (state.hits.size() > AbsorbCaps.MOB_REVENGE_MAX_HITS) state.hits.removeFirst();
 		}
 	}
 
@@ -198,15 +187,15 @@ public final class MobAttitudeBehavior implements Behavior<MobAttitudeBehavior.P
 			BlockPos goal = path.getTarget();
 			if (goal != null && Vec3.atBottomCenterOf(goal).distanceToSqr(from) > mobDistance) return;
 		}
-		Vec3 away = DefaultRandomPos.getPosAway(mob, FLEE_HORIZONTAL, FLEE_VERTICAL, from);
-		if (away != null && away.distanceToSqr(from) > mobDistance) nav.moveTo(away.x, away.y, away.z, FLEE_SPEED);
+		Vec3 away = DefaultRandomPos.getPosAway(mob, AbsorbCaps.MOB_FLEE_MAX_HORIZONTAL, AbsorbCaps.MOB_FLEE_MAX_VERTICAL, from);
+		if (away != null && away.distanceToSqr(from) > mobDistance) nav.moveTo(away.x, away.y, away.z, AbsorbCaps.MOB_FLEE_SPEED);
 	}
 
 	private static boolean revenge(EntryStates.State state, Mob mob, long now) {
 		for (EntryStates.Hit hit : state.hits) {
-			if (now - hit.tick() > REVENGE_TICKS) continue;
+			if (now - hit.tick() > AbsorbCaps.MOB_REVENGE_TICKS) continue;
 			if (hit.mob().equals(mob.getUUID())) return true;
-			if (hit.type() == mob.getType() && hit.pos().distanceToSqr(mob.position()) <= REVENGE_RADIUS * REVENGE_RADIUS) return true;
+			if (hit.type() == mob.getType() && hit.pos().distanceToSqr(mob.position()) <= AbsorbCaps.MOB_REVENGE_RADIUS * AbsorbCaps.MOB_REVENGE_RADIUS) return true;
 		}
 		return false;
 	}

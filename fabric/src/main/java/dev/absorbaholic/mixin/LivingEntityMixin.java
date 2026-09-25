@@ -16,7 +16,10 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -37,6 +40,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <li>{@code heal(F)V} HEAD → {@code TraitEngine.modifyHeal(p, amount, natural)}.</li>
  * <li>{@code addEffect(MobEffectInstance, Entity)} HEAD → {@code TraitEngine.modifyEffect} (deny is ALLOW_ADD).</li>
  * <li>{@code canStandOnFluid} HEAD → WALK_ON_WATER / WALK_ON_LAVA (not while sneaking). Both sides.</li>
+ * <li>{@code getLiquidCollisionShape} HEAD → a full-block surface for such a player, so a fluid source's top (8/9 high)
+ *     is solid ground with the feet above the fluid (vanilla returns an empty shape for everything but the Strider).
+ *     Both sides: movement is client authoritative and reads the synced flags.</li>
+ * <li>{@code travel} HEAD → such a player (not sneaking) inside the fluid it walks on rises at least
+ *     {@code AbsorbCaps.FLUID_WALK_RISE_SPEED} until it stands on the surface (canStandOnFluid gives it air physics
+ *     there, so without this it would sink). Both sides.</li>
+ * <li>{@code knockback(DDDLDamageSource;FZ)V} HEAD {@code @ModifyVariable(argsOnly, ordinal 0)}: the strength a
+ *     ServerPlayer takes → {@code TraitEngine.modifyKnockback} (knockback_multiplier).</li>
+ * <li>{@code readAdditionalSaveData} RETURN → the raw saved {@code Health} of a ServerPlayer, before vanilla clamped it
+ *     to the max without our modifiers → {@code TraitEngine.onHealthLoaded}.</li>
  * <li>{@code onClimbable} HEAD → CLIMB_WALLS while pushing against a wall; the climb speed replaces the vanilla
  *     ladder speed (0.2) away from real climbable blocks. Both sides.</li>
  * <li>{@code travelInWater} TAIL → SINK_IN_WATER on the client (the server behavior moves vanilla clients):
@@ -79,6 +92,33 @@ public abstract class LivingEntityMixin {
 		}
 	}
 
+	@Inject(method = "getLiquidCollisionShape()Lnet/minecraft/world/phys/shapes/VoxelShape;", at = @At("HEAD"), cancellable = true)
+	private void absorbaholic$fluidSurface(CallbackInfoReturnable<VoxelShape> cir) {
+		// the fluid type is checked by LiquidBlock through canStandOnFluid (hooked above)
+		if (absorbaholic$fluidFlags() != 0) cir.setReturnValue(Shapes.block());
+	}
+
+	@Inject(method = "travel(Lnet/minecraft/world/phys/Vec3;)V", at = @At("HEAD"))
+	private void absorbaholic$riseInWalkedFluid(Vec3 input, CallbackInfo ci) {
+		int flags = absorbaholic$fluidFlags();
+		if (flags == 0) return;
+		Player player = (Player) (Object) this;
+		if ((flags & MovementFlags.WALK_ON_LAVA) != 0 && player.isInLava() || (flags & MovementFlags.WALK_ON_WATER) != 0 && player.isInWater()) {
+			Vec3 v = player.getDeltaMovement();
+			if (v.y < AbsorbCaps.FLUID_WALK_RISE_SPEED) player.setDeltaMovement(v.x, AbsorbCaps.FLUID_WALK_RISE_SPEED, v.z);
+		}
+	}
+
+	@ModifyVariable(method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V", at = @At("HEAD"), argsOnly = true, ordinal = 0)
+	private double absorbaholic$modifyKnockback(double power, @Local(argsOnly = true) @Nullable DamageSource source) {
+		return (Object) this instanceof ServerPlayer player ? TraitEngine.modifyKnockback(player, source, power) : power;
+	}
+
+	@Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
+	private void absorbaholic$savedHealth(ValueInput input, CallbackInfo ci) {
+		if ((Object) this instanceof ServerPlayer player) TraitEngine.onHealthLoaded(player, input.getFloatOr("Health", Float.NaN));
+	}
+
 	@Inject(method = "onClimbable()Z", at = @At("HEAD"), cancellable = true)
 	private void absorbaholic$climbWalls(CallbackInfoReturnable<Boolean> cir) {
 		if (absorbaholic$wallClimbing()) cir.setReturnValue(true);
@@ -115,6 +155,13 @@ public abstract class LivingEntityMixin {
 			double factor = TraitEngine.visibilityFactor(player, looker);
 			if (factor != 1.0) cir.setReturnValue(cir.getReturnValueD() * factor);
 		}
+	}
+
+	/** WALK_ON_WATER / WALK_ON_LAVA bits of a player that is not sneaking, riding or flying; 0 otherwise. */
+	@Unique
+	private int absorbaholic$fluidFlags() {
+		if (!((Object) this instanceof Player player) || player.isShiftKeyDown() || player.isPassenger() || player.getAbilities().flying) return 0;
+		return ((MovementFlagsHolder) player).absorbaholic$movement().flags() & (MovementFlags.WALK_ON_WATER | MovementFlags.WALK_ON_LAVA);
 	}
 
 	@Unique

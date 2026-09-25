@@ -14,7 +14,8 @@
 			"dev.absorbaholic.test.BehaviorAGameTests",
 			"dev.absorbaholic.test.BehaviorBGameTests",
 			"dev.absorbaholic.test.BehaviorCGameTests",
-			"dev.absorbaholic.test.AcceptanceGameTests"
+			"dev.absorbaholic.test.AcceptanceGameTests",
+			"dev.absorbaholic.test.EngineFixGameTests"
 		],
 		"fabric-client-gametest": [
 			"dev.absorbaholic.test.AbsorbClientGameTest",

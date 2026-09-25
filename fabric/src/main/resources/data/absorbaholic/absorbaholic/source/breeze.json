@@ -17,11 +17,10 @@
   },
   "weakness": {
     "key": "gust_blown",
-    "attributes": [
+    "behaviors": [
       {
-        "attribute": "minecraft:knockback_resistance",
-        "operation": "add_value",
-        "amount": [-0.3, -0.6, -0.9]
+        "type": "absorbaholic:knockback_multiplier",
+        "multiplier": [1.3, 1.6, 1.9]
       }
     ]
   }

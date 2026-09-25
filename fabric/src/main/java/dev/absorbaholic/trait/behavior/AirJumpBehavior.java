@@ -42,7 +42,7 @@ public final class AirJumpBehavior implements Behavior<AirJumpBehavior.Params> {
 		/** Charges per airtime at {@code level} (0 = inactive). */
 		public int chargesAt(int level) {
 			double c = AbilitySupport.at(charges, level);
-			return c > 0.0 ? (int) Math.min(64, Math.floor(c)) : 0;
+			return c > 0.0 ? (int) Math.min(AbsorbCaps.AIR_JUMP_MAX_CHARGES, Math.floor(c)) : 0;
 		}
 
 		/** Burst velocity at {@code level}, capped. */

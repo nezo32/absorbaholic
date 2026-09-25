@@ -31,7 +31,8 @@ import org.jspecify.annotations.Nullable;
  *     (max {@link AbsorbCaps#FROST_WALK_MAX_RADIUS}; &lt;= 0 disables the level) of the block below the feet turn into
  *     melting {@code frosted_ice} (unabsorbable).</li>
  * <li>{@code solid} (client physics): the fluid's surface is solid ({@link MovementFlags#WALK_ON_WATER} /
- *     {@link MovementFlags#WALK_ON_LAVA} through LivingEntity#canStandOnFluid on both sides); sneaking sinks.
+ *     {@link MovementFlags#WALK_ON_LAVA} through LivingEntity#canStandOnFluid and #getLiquidCollisionShape on both
+ *     sides, see LivingEntityMixin); a player inside the fluid rises onto the surface; sneaking sinks.
  *     {@code radius} is unused and a condition is not allowed (the flag is static client physics).</li>
  * </ul>
  */

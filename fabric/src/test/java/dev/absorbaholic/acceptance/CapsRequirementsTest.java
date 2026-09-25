@@ -80,7 +80,8 @@ class CapsRequirementsTest {
 
 	/**
 	 * Fuzz of the gate with realistic weakness hits (0.25..4 HP each, several per tick possible): in EVERY rolling
-	 * 20-tick window at most 8 HP gets through, and a hit dealt at full health never leaves less than 1 HP.
+	 * 20-tick window at most min(8, maxHealth - 1) HP gets through, and while the player was at full health at any point
+	 * of the window, weakness damage never leaves it below 1 HP.
 	 */
 	@Test
 	void gateNeverLetsMoreThanFourHeartsPerSecondThrough() {
@@ -91,20 +92,23 @@ class CapsRequirementsTest {
 			float health = maxHealth;
 			ArrayDeque<float[]> dealt = new ArrayDeque<>(); // {tick, amount}
 			float inWindow = 0;
+			long lastFull = Long.MIN_VALUE / 2;
+			float budget = Math.min(AbsorbCaps.WEAKNESS_DAMAGE_BUDGET, maxHealth - AbsorbCaps.WEAKNESS_MIN_HEALTH_FROM_FULL);
 			for (long tick = 0; tick < 400; tick++) {
 				while (!dealt.isEmpty() && tick - (long) dealt.peekFirst()[0] >= 20) inWindow -= dealt.removeFirst()[1];
+				gate.observe(tick, health, maxHealth); // the engine reports health every tick
+				if (health >= maxHealth) lastFull = tick;
 				int hits = r.nextInt(10) < 3 ? 1 + r.nextInt(3) : 0;
 				for (int k = 0; k < hits; k++) {
 					float req = 0.25F + r.nextFloat() * 3.75F;
-					boolean full = health >= maxHealth;
 					float allowed = r.nextBoolean() ? gate.allowDirect(tick, req, health, maxHealth)
 							: gate.allowExtra(tick, req, r.nextFloat() * 3, health, maxHealth);
 					assertTrue(allowed >= 0 && allowed <= req + 1e-6, "allowed " + allowed + " of " + req);
-					if (full) assertTrue(health - allowed >= 1.0F - 1e-5, "full-health hit left " + (health - allowed));
+					if (tick - lastFull < 20) assertTrue(health - allowed >= 1.0F - 1e-5, "full in this window, left " + (health - allowed));
 					health -= allowed;
 					dealt.addLast(new float[] {tick, allowed});
 					inWindow += allowed;
-					assertTrue(inWindow <= AbsorbCaps.WEAKNESS_DAMAGE_BUDGET + 1e-4, "window total " + inWindow + " at tick " + tick);
+					assertTrue(inWindow <= budget + 1e-4, "window total " + inWindow + " > " + budget + " at tick " + tick);
 				}
 				if (health <= 0) health = maxHealth; // respawn-ish; gate keeps its memory
 				if (r.nextInt(20) == 0) health = Math.min(maxHealth, health + 4);
@@ -133,15 +137,7 @@ class CapsRequirementsTest {
 	 * cooldowns, ranges, chances or limits. Flags {@code static final} int/long/float/double fields outside core whose
 	 * name looks like a cap (COOLDOWN, RANGE, RADIUS, MAX, MIN, CHANCE, BUDGET, THRESHOLD, DAMAGE, LIMIT).
 	 */
-	private static final java.util.Set<String> KNOWN_OUTSIDE = java.util.Set.of(
-			// not caps: protocol / layout / refresh thresholds
-			"NetCodecs.java: MAX_LIST = 4096", "TraitsSync.java: MAX_NAME_LENGTH = 64", "AbsorbHud.java: MAX_HINT_WIDTH = 200",
-			"TraitsScreen.java: MAX_ROW_WIDTH = 340", "AuraParticles.java: MAX_DISTANCE = 48.0",
-			"StatusEffectBehavior.java: PERMANENT_MIN_LEFT = 60", "StatusEffectBehavior.java: NIGHT_VISION_MIN_LEFT = 220",
-			// gameplay limits outside AbsorbCaps (tester report, LOW)
-			"MobRules.java: MAX_MOBS_PER_SCAN = 48", "TeleportBehavior.java: LOOK_MAX_DROP = 3",
-			"MobAttitudeBehavior.java: REVENGE_RADIUS = 16.0", "MobAttitudeBehavior.java: REVENGE_MAX_HITS = 16",
-			"ItemMagnetBehavior.java: MAX_ITEMS = 64");
+	private static final java.util.Set<String> KNOWN_OUTSIDE = java.util.Set.of();
 
 	@Test
 	void capsLiveInAbsorbCapsOnly() throws IOException {

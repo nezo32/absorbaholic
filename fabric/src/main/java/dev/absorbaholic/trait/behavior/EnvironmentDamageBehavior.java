@@ -13,6 +13,7 @@ import dev.absorbaholic.trait.Behavior;
 import dev.absorbaholic.trait.BehaviorRegistry;
 import dev.absorbaholic.trait.BehaviorType;
 import dev.absorbaholic.trait.Condition;
+import dev.absorbaholic.trait.TraitEngine;
 import dev.absorbaholic.trait.WeaknessDamage;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -22,7 +23,8 @@ import net.minecraft.world.item.ItemStack;
  * {@code absorbaholic:environment_damage}: every {@code interval} ticks (default 20) while the condition holds, either
  * {@code damage} HP of {@code absorbaholic:weakness} damage through the weakness damage gate ({@link WeaknessDamage}:
  * no armor, no knockback, at most 8 HP per 20 ticks), or ignition for {@code ignite_seconds} (fire ticks are raised to
- * at least that; the burn is vanilla fire damage, so fire resistance and fire immunity counter it). With
+ * at least that; the burn is vanilla fire damage, so fire resistance and fire immunity counter it; on a weakness the burning is charged
+ * to the weakness damage gate). With
  * {@code helmet_blocks}, any head item blocks the effect like an undead mob's helmet and loses 1 durability instead.
  * A level value &lt;= 0 disables the entry at that level.
  *
@@ -33,7 +35,7 @@ public final class EnvironmentDamageBehavior implements Behavior<EnvironmentDama
 		public static final MapCodec<Params> CODEC = RecordCodecBuilder.<Params>mapCodec(i -> i.group(
 				LevelValue.CODEC.optionalFieldOf("damage").forGetter(Params::damage),
 				LevelValue.CODEC.optionalFieldOf("ignite_seconds").forGetter(Params::igniteSeconds),
-				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, 72000).optionalFieldOf("interval", 20).forGetter(Params::interval),
+				Codec.intRange(AbsorbCaps.BEHAVIOR_MIN_TICK_INTERVAL, AbsorbCaps.BEHAVIOR_MAX_TICK_INTERVAL).optionalFieldOf("interval", 20).forGetter(Params::interval),
 				Codec.BOOL.optionalFieldOf("helmet_blocks", false).forGetter(Params::helmetBlocks),
 				Condition.FIELDS.forGetter(Params::condition)
 		).apply(i, Params::new)).validate(Params::validate);
@@ -69,7 +71,10 @@ public final class EnvironmentDamageBehavior implements Behavior<EnvironmentDama
 			WeaknessDamage.hurt(player, (float) damage);
 		} else {
 			int ticks = (int) Math.round(seconds * 20.0);
-			if (ticks > player.getRemainingFireTicks()) player.setRemainingFireTicks(ticks);
+			if (ticks > player.getRemainingFireTicks()) {
+				player.setRemainingFireTicks(ticks);
+				if (self.weakness()) TraitEngine.noteWeaknessIgnition(player, ticks); // the burn counts toward the damage gate
+			}
 		}
 	}
 }

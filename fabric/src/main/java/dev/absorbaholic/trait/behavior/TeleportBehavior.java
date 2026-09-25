@@ -66,10 +66,6 @@ public final class TeleportBehavior implements Behavior<TeleportBehavior.Params>
 	private static final Set<Block> DANGEROUS_BLOCKS = Set.of(Blocks.FIRE, Blocks.SOUL_FIRE, Blocks.LAVA_CAULDRON, Blocks.CAMPFIRE,
 			Blocks.SOUL_CAMPFIRE, Blocks.CACTUS, Blocks.MAGMA_BLOCK, Blocks.SWEET_BERRY_BUSH, Blocks.WITHER_ROSE, Blocks.POINTED_DRIPSTONE,
 			Blocks.POWDER_SNOW);
-	/** Attempts of the random (chorus) search. */
-	static final int RANDOM_ATTEMPTS = 16;
-	/** Look mode: how far below the ray a landing spot may be. */
-	static final int LOOK_MAX_DROP = 3;
 	/** Look mode: step when walking back along the ray. */
 	private static final double LOOK_STEP = 0.5;
 
@@ -172,7 +168,7 @@ public final class TeleportBehavior implements Behavior<TeleportBehavior.Params>
 		BlockPos start = player.blockPosition();
 		for (double d = reach - 0.3; d >= 1.0; d -= LOOK_STEP) {
 			BlockPos at = BlockPos.containing(eye.add(dir.scale(d)));
-			for (int drop = 0; drop <= LOOK_MAX_DROP; drop++) {
+			for (int drop = 0; drop <= AbsorbCaps.TELEPORT_LOOK_MAX_DROP; drop++) {
 				BlockPos pos = at.below(drop);
 				if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()) {
 					BlockPos feet = pos.above();
@@ -192,7 +188,7 @@ public final class TeleportBehavior implements Behavior<TeleportBehavior.Params>
 		RandomSource random = player.getRandom();
 		int minY = level.getMinY();
 		int maxY = level.getMaxY();
-		for (int attempt = 0; attempt < RANDOM_ATTEMPTS; attempt++) {
+		for (int attempt = 0; attempt < AbsorbCaps.TELEPORT_RANDOM_ATTEMPTS; attempt++) {
 			double x = player.getX() + (random.nextDouble() - 0.5) * 2.0 * range;
 			double y = Mth.clamp(player.getY() + (random.nextDouble() - 0.5) * range, minY, maxY);
 			double z = player.getZ() + (random.nextDouble() - 0.5) * 2.0 * range;

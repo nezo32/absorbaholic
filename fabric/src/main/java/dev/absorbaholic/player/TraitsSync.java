@@ -1,6 +1,7 @@
 package dev.absorbaholic.player;
 
 import dev.absorbaholic.Absorbaholic;
+import dev.absorbaholic.core.AbsorbCaps;
 import dev.absorbaholic.net.TraitsPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class TraitsSync {
 	/** Must match the name codec of {@link TraitsPayload}. */
-	private static final int MAX_NAME_LENGTH = 64;
+	private static final int MAX_NAME_LENGTH = AbsorbCaps.NET_MAX_NAME_LENGTH;
 
 	private TraitsSync() {}
 

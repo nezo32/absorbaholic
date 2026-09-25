@@ -34,8 +34,6 @@ import org.jspecify.annotations.Nullable;
  * <pre>{"type": "absorbaholic:detection_range", "entities": ["#minecraft:skeletons"], "multiplier": [1.3, 1.6, 2.0]}</pre>
  */
 public final class DetectionRangeBehavior implements Behavior<DetectionRangeBehavior.Params> {
-	static final int SCAN_INTERVAL = 20;
-
 	public record Params(TargetFilter entities, LevelValue multiplier, Condition condition) {
 		public static final MapCodec<Params> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
 				TargetFilter.CODEC.optionalFieldOf("entities", TargetFilter.HOSTILE).forGetter(Params::entities),
@@ -56,7 +54,7 @@ public final class DetectionRangeBehavior implements Behavior<DetectionRangeBeha
 
 	@Override
 	public int tickInterval(Params p) {
-		return SCAN_INTERVAL;
+		return AbsorbCaps.DETECTION_SCAN_INTERVAL_TICKS;
 	}
 
 	@Override

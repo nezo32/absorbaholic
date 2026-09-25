@@ -38,7 +38,8 @@ public final class CombatBehaviors {
 			AttackEffectBehavior.TYPE,
 			RetaliateBehavior.TYPE,
 			KillRewardBehavior.TYPE,
-			StruckByBehavior.TYPE);
+			StruckByBehavior.TYPE,
+			KnockbackMultiplierBehavior.TYPE);
 
 	private CombatBehaviors() {}
 
@@ -86,7 +87,7 @@ public final class CombatBehaviors {
 		Map<UUID, Long> until = (Map<UUID, Long>) state.computeIfAbsent(stateKey(self), k -> new HashMap<UUID, Long>());
 		Long end = until.get(other.getUUID());
 		if (end != null && now < end) return false;
-		if (until.size() >= 32) until.values().removeIf(t -> t <= now); // stale attackers
+		if (until.size() >= AbsorbCaps.RETALIATE_MAX_TRACKED_ATTACKERS) until.values().removeIf(t -> t <= now); // stale attackers
 		until.put(other.getUUID(), now + ticks);
 		return true;
 	}

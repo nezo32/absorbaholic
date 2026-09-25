@@ -28,6 +28,10 @@ public final class PlayerRuntime {
 	public Input lastInput = Input.EMPTY;
 	/** Weakness damage limiter. */
 	public final DamageGate damageGate = new DamageGate();
+	/** Game time until which the player's burning was started by a weakness (charged to {@link #damageGate}). */
+	public long weaknessFireUntil = Long.MIN_VALUE / 2;
+	/** Raw saved / carried-over health to restore once our max-health modifiers are back (NaN = none). */
+	public float pendingHealth = Float.NaN;
 	/** Per-ability cooldown end (game time), keyed by behavior type id + source id; see TraitEngine. */
 	public final Map<Identifier, Long> abilityCooldowns = new HashMap<>();
 	/** Game time of the previous sneak rising edge (sneak_double_tap). */
