@@ -626,17 +626,21 @@ CAPS_ROWS = [
                             "{DETECTION_MAX_RADIUS} blocks away"),
     ("Effect amplifier from weaknesses", "at most level {EFFECT_AMPLIFIER_MAX+1}"),
     ("Active abilities", "cooldown ≥ {ABILITY_MIN_COOLDOWN_TICKS/20} s, range ≤ {ABILITY_MAX_RANGE} blocks, "
-                         "≤ {ABILITY_MAX_TARGETS} targets, {ABILITY_EXHAUSTION} exhaustion per use; one ability per "
-                         "trigger"),
+                         "≤ {ABILITY_MAX_TARGETS} targets, {ABILITY_EXHAUSTION} exhaustion per use "
+                         "({AIR_JUMP_EXHAUSTION} per air jump); one ability per trigger, sneak-swing at most once per "
+                         "{SNEAK_SWING_MIN_INTERVAL_TICKS} ticks"),
     ("Teleport / sonic boom / evoker fangs", "≤ {TELEPORT_MAX_DISTANCE} blocks / ≤ {SONIC_BOOM_MAX_RANGE} blocks / "
                                              "≤ {EVOKER_FANGS_MAX} fangs"),
     ("Explosions", "power ≤ {ABILITY_MAX_EXPLOSION_POWER} (fireballs ≤ {FIREBALL_MAX_EXPLOSION_POWER}), never "
                    "break blocks"),
-    ("Flight", "{FLIGHT_EXHAUSTION_PER_TICK} exhaustion per tick; losing it mid-air gives "
+    ("Flight", "speed ≤ {FLIGHT_MAX_SPEED}, {FLIGHT_EXHAUSTION_PER_TICK} exhaustion per tick; losing it mid-air gives "
                "{FLIGHT_LOSS_SLOW_FALLING_TICKS/20} s of Slow Falling"),
-    ("Auras / item magnet", "radius ≤ {AURA_MAX_RADIUS} / ≤ {ITEM_MAGNET_MAX_RADIUS} blocks"),
+    ("Auras / item magnet", "radius ≤ {AURA_MAX_RADIUS} / ≤ {ITEM_MAGNET_MAX_RADIUS} blocks "
+                            "(≤ {ITEM_MAGNET_MAX_ITEMS} items per pulse)"),
+    ("Mob scans (fear, hunting, detection)", "≤ {MOB_SCAN_MAX_RADIUS} blocks, ≤ {MOB_SCAN_MAX_MOBS} mobs per scan"),
     ("World protection", "bedrock (`#absorbaholic:bedrock_protected`) can't be absorbed in the bottom "
-                         "{PROTECTED_LAYERS} layers or at the Nether roof"),
+                         "{PROTECTED_LAYERS} layers, in the top {PROTECTED_LAYERS} under the Nether roof, or anywhere "
+                         "in the End"),
 ]
 CLAMP_UNITS = {"max_health": " HP", "block_interaction_range": " blocks", "entity_interaction_range": " blocks",
                "step_height": " blocks", "safe_fall_distance": " blocks"}

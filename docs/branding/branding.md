@@ -309,12 +309,13 @@ Mod Menu (Mods → Absorbaholic → config), or with `/absorbaholic-notify sound
 | Item wear | ×0.5–×3 |
 | Mob detection range | ×0.25–×3, provoking at most 48 blocks away |
 | Effect amplifier from weaknesses | at most level V |
-| Active abilities | cooldown ≥ 1 s, range ≤ 24 blocks, ≤ 8 targets, 1 exhaustion per use; one ability per trigger |
+| Active abilities | cooldown ≥ 1 s, range ≤ 24 blocks, ≤ 8 targets, 1 exhaustion per use (0.5 per air jump); one ability per trigger, sneak-swing at most once per 4 ticks |
 | Teleport / sonic boom / evoker fangs | ≤ 16 blocks / ≤ 20 blocks / ≤ 16 fangs |
 | Explosions | power ≤ 3 (fireballs ≤ 2), never break blocks |
-| Flight | 0.01 exhaustion per tick; losing it mid-air gives 10 s of Slow Falling |
-| Auras / item magnet | radius ≤ 16 / ≤ 10 blocks |
-| World protection | bedrock (`#absorbaholic:bedrock_protected`) can't be absorbed in the bottom 5 layers or at the Nether roof |
+| Flight | speed ≤ 1, 0.01 exhaustion per tick; losing it mid-air gives 10 s of Slow Falling |
+| Auras / item magnet | radius ≤ 16 / ≤ 10 blocks (≤ 64 items per pulse) |
+| Mob scans (fear, hunting, detection) | ≤ 64 blocks, ≤ 48 mobs per scan |
+| World protection | bedrock (`#absorbaholic:bedrock_protected`) can't be absorbed in the bottom 5 layers, in the top 5 under the Nether roof, or anywhere in the End |
 
 Attribute clamps (on the final value, whatever else changes it):
 
