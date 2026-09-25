@@ -17,6 +17,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
@@ -26,9 +28,12 @@ import org.jspecify.annotations.Nullable;
 /**
  * {@code absorbaholic:sonic_boom} (warden), trigger {@code sneak_swing} (at air or at an entity): {@code damage} [L],
  * {@code range} [L] (capped at {@link AbsorbCaps#SONIC_BOOM_MAX_RANGE}), {@code cooldown} [L]. Like the Warden: a ray
- * from the eye up to {@code range} hits the <b>first</b> living entity whose box it crosses, through blocks, and only
- * that one. It takes {@code damage} of the vanilla {@code sonic_boom} type attributed to the player (bypasses armor
- * and shields; PvP rules apply) and is knocked back 2.5 horizontally / 0.5 vertically × (1 - knockback resistance).
+ * from the eye up to {@code range} hits the <b>first</b> eligible living entity whose box it crosses, and only that
+ * one. Only hostile mobs ({@code Enemy}) are hit through blocks; every other entity (players, pets, villagers,
+ * animals) needs a line of sight from the player's eye, and players the owner may not harm (PvP off, teams) are never
+ * targets: the ray passes them by. The target takes {@code damage} of the vanilla {@code sonic_boom} type attributed
+ * to the player (bypasses armor and shields) and is knocked back 2.5 horizontally / 0.5 vertically × (1 - knockback
+ * resistance).
  * Sonic boom particles run along the ray with the warden sound. No target: particles only and half the cooldown
  * (never below {@link AbsorbCaps#ABILITY_MIN_COOLDOWN_TICKS}).
  */
@@ -83,13 +88,24 @@ public final class SonicBoomBehavior implements Behavior<SonicBoomBehavior.Param
 		return true;
 	}
 
-	/** The first living entity whose box the ray crosses (entities only: blocks do not stop it). */
+	/** The first eligible living entity whose box the ray crosses ({@link #eligible}; blocks stop it only for non-hostiles). */
 	static @Nullable LivingEntity firstTarget(ServerPlayer player, Vec3 eye, Vec3 dir, double range) {
 		Vec3 end = eye.add(dir.scale(range));
 		AABB box = player.getBoundingBox().expandTowards(dir.scale(range)).inflate(1.0);
-		EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box,
-				e -> e instanceof LivingEntity living && living.isAlive() && !e.isSpectator() && e.isPickable() && !player.isPassengerOfSameVehicle(e),
-				range * range);
+		EntityHitResult hit = ProjectileUtil.getEntityHitResult(player, eye, end, box, e -> eligible(player, e), range * range);
 		return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+	}
+
+	/**
+	 * A possible sonic boom target: alive, pickable living entity (not the player's vehicle mate); a player only if the
+	 * owner may harm them (PvP); anything but a hostile mob only with a line of sight (no shots through walls at
+	 * players, pets, villagers or animals).
+	 */
+	static boolean eligible(ServerPlayer player, Entity e) {
+		if (!(e instanceof LivingEntity living) || !living.isAlive() || e.isSpectator() || !e.isPickable() || player.isPassengerOfSameVehicle(e)) {
+			return false;
+		}
+		if (e instanceof Player other && !player.canHarmPlayer(other)) return false;
+		return e instanceof Enemy || player.hasLineOfSight(e);
 	}
 }

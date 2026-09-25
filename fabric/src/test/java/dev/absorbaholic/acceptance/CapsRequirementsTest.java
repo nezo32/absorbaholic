@@ -139,8 +139,7 @@ class CapsRequirementsTest {
 			"TraitsScreen.java: MAX_ROW_WIDTH = 340", "AuraParticles.java: MAX_DISTANCE = 48.0",
 			"StatusEffectBehavior.java: PERMANENT_MIN_LEFT = 60", "StatusEffectBehavior.java: NIGHT_VISION_MIN_LEFT = 220",
 			// gameplay limits outside AbsorbCaps (tester report, LOW)
-			"SneakDetonateBehavior.java: MAX_FUSE = 200", "MobRules.java: MAX_MOBS_PER_SCAN = 48", "TeleportBehavior.java: LOOK_MAX_DROP = 3",
-			"ShootProjectileBehavior.java: SHULKER_RANGE = 16.0", "ShootProjectileBehavior.java: FANG_DAMAGE = 6.0F",
+			"MobRules.java: MAX_MOBS_PER_SCAN = 48", "TeleportBehavior.java: LOOK_MAX_DROP = 3",
 			"MobAttitudeBehavior.java: REVENGE_RADIUS = 16.0", "MobAttitudeBehavior.java: REVENGE_MAX_HITS = 16",
 			"ItemMagnetBehavior.java: MAX_ITEMS = 64");
 

@@ -44,10 +44,13 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.AmethystBlock;
+import net.minecraft.world.level.block.BellBlock;
+import net.minecraft.world.level.block.BigDripleafBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.TargetBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -63,16 +66,21 @@ import org.jspecify.annotations.Nullable;
  * <li>Projectiles leave the eye along the look vector, owned by the player (they count as the player's attacks);
  *     {@code count > 1} fans them over {@value #SPREAD_DEGREES}° in one tick. {@code count} is capped at
  *     {@link AbsorbCaps#ABILITY_MAX_TARGETS} ({@link AbsorbCaps#EVOKER_FANGS_MAX} fangs); &lt;= 0 disables the level.</li>
- * <li>{@code fireball}: power capped at {@link AbsorbCaps#FIREBALL_MAX_EXPLOSION_POWER}, never breaks blocks or lights
- *     fires ({@code ExplosionInteraction.NONE}). {@code small_fireball} sets what it hits on fire, but places fire
- *     blocks only with mobGriefing on (vanilla would always let a player's fireball place fire).</li>
+ * <li>{@code fireball}: power capped at {@link AbsorbCaps#FIREBALL_MAX_EXPLOSION_POWER}; the blast is
+ *     {@link AbilitySupport#explode}: no blocks, no fire, and players the shooter may not harm (PvP off), pets,
+ *     villagers, armor stands, frames, items and the like take neither damage nor knockback.
+ *     {@code small_fireball} sets the entity it hits on fire but never places fire blocks.</li>
+ * <li>The fire / trait-only projectiles (small_fireball, fireball, dragon_fireball, wither_skull) never change a block:
+ *     of the vanilla block reactions to a projectile they keep only the harmless ones (target, bell, amethyst,
+ *     big dripleaf): no TNT priming, candle or campfire lighting, pot or chorus breaking.</li>
  * <li>{@code snowball} / {@code llama_spit}: {@code damage} replaces vanilla's 0 / 1. {@code evoker_fangs}: a line
  *     on the ground along the look direction, one block apart; {@code damage} rescales vanilla's 6 through the
  *     outgoing damage factor (so 3..12 is allowed). {@code arrow}: base damage, never picked up.</li>
- * <li>{@code shulker_bullet}: homes on the nearest {@code Enemy} within {@value #SHULKER_RANGE} blocks in a
+ * <li>{@code shulker_bullet}: homes on the nearest {@code Enemy} within {@value AbsorbCaps#SHULKER_BULLET_RANGE} blocks in a
  *     {@value #SHULKER_CONE_DEGREES}° cone with line of sight; none = no shot and no cooldown.</li>
- * <li>{@code dragon_fireball}: its lingering breath never hurts the player who fired it. {@code wither_skull} and
- *     {@code arrow} (reserved, unused by v1 data) behave as vanilla.</li>
+ * <li>{@code dragon_fireball}: its lingering breath never hurts the player who fired it. {@code wither_skull}
+ *     (reserved, unused by v1 data): vanilla hit damage, but its blast is {@link AbilitySupport#explode} (never
+ *     breaks blocks, whatever mobGriefing says). {@code arrow} (reserved) behaves as vanilla.</li>
  * </ul>
  * Our damage-tuned or block-safe subclasses are never saved with the chunk (they are discarded on unload), so they
  * can never come back as vanilla projectiles.
@@ -80,11 +88,8 @@ import org.jspecify.annotations.Nullable;
 public final class ShootProjectileBehavior implements Behavior<ShootProjectileBehavior.Params> {
 	/** Total fan angle of a multi-shot. */
 	static final float SPREAD_DEGREES = 10.0F;
-	/** Shulker bullet target search. */
-	static final double SHULKER_RANGE = 16.0;
+	/** Shulker bullet target cone (range: {@link AbsorbCaps#SHULKER_BULLET_RANGE}). */
 	static final double SHULKER_CONE_DEGREES = 30.0;
-	/** Vanilla evoker fang damage (the base of the {@code damage} factor). */
-	static final float FANG_DAMAGE = 6.0F;
 
 	/** Supported projectiles. */
 	public enum Kind implements StringRepresentable {
@@ -140,11 +145,12 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 				return DataResult.error(() -> "\"explosion_power\" is only used by projectile fireball");
 			}
 			if (projectile == Kind.EVOKER_FANGS && damage.isPresent()) {
+				double min = AbsorbCaps.EVOKER_FANG_BASE_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MIN;
+				double max = AbsorbCaps.EVOKER_FANG_BASE_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MAX;
 				for (int level = 1; level <= AbsorbCaps.MAX_MAX_LEVEL; level++) {
 					double d = damage.get().at(level);
-					if (d < FANG_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MIN || d > FANG_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MAX) {
-						return DataResult.error(() -> "evoker_fangs \"damage\" must be within " + FANG_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MIN
-								+ ".." + FANG_DAMAGE * AbsorbCaps.DAMAGE_DEALT_MAX);
+					if (d < min || d > max) {
+						return DataResult.error(() -> "evoker_fangs \"damage\" must be within " + min + ".." + max);
 					}
 				}
 			}
@@ -195,7 +201,7 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		Params p = self.params();
 		if (p.projectile() != Kind.EVOKER_FANGS || p.damage().isEmpty()) return 1.0F;
 		if (!(source.getDirectEntity() instanceof EvokerFangs fangs) || fangs.getOwner() != player) return 1.0F;
-		return p.damageAt(self.level()) / FANG_DAMAGE;
+		return p.damageAt(self.level()) / AbsorbCaps.EVOKER_FANG_BASE_DAMAGE;
 	}
 
 	/** Spawns the shot; false if nothing could be fired (no shulker target, no ground for fangs). */
@@ -233,8 +239,8 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		Projectile projectile = switch (p.projectile()) {
 			case SMALL_FIREBALL -> new PlayerSmallFireball(world, player, dir);
 			case FIREBALL -> new PlayerFireball(world, player, dir, p.explosionPowerAt(level));
-			case DRAGON_FIREBALL -> new DragonFireball(world, player, dir);
-			case WITHER_SKULL -> new WitherSkull(world, player, dir);
+			case DRAGON_FIREBALL -> new PlayerDragonFireball(world, player, dir);
+			case WITHER_SKULL -> new PlayerWitherSkull(world, player, dir);
 			case WIND_CHARGE -> {
 				WindCharge charge = new WindCharge(player, world, start.x, start.y, start.z);
 				charge.shoot(dir.x, dir.y, dir.z, 1.5F, 1.0F);
@@ -268,7 +274,7 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 	/** Nearest hostile in front of the player (the crosshair entity first), within range, cone and line of sight. */
 	static @Nullable LivingEntity shulkerTarget(ServerPlayer player, @Nullable Entity crosshair) {
 		if (crosshair instanceof LivingEntity living && validShulkerTarget(player, living)) return living;
-		return player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(SHULKER_RANGE),
+		return player.level().getEntitiesOfClass(LivingEntity.class, player.getBoundingBox().inflate(AbsorbCaps.SHULKER_BULLET_RANGE),
 						e -> validShulkerTarget(player, e)).stream()
 				.min(Comparator.comparingDouble(player::distanceToSqr))
 				.orElse(null);
@@ -278,7 +284,7 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		if (!(e instanceof Enemy) || !e.isAlive() || e.isSpectator() || e == player) return false;
 		Vec3 to = e.getBoundingBox().getCenter().subtract(player.getEyePosition());
 		double distance = to.length();
-		if (distance > SHULKER_RANGE || distance < 1.0E-3) return false;
+		if (distance > AbsorbCaps.SHULKER_BULLET_RANGE || distance < 1.0E-3) return false;
 		double cos = to.scale(1.0 / distance).dot(player.getViewVector(1.0F));
 		return cos >= Math.cos(Math.toRadians(SHULKER_CONE_DEGREES / 2.0)) && player.hasLineOfSight(e);
 	}
@@ -319,7 +325,27 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		return false;
 	}
 
-	/** Ghast fireball that never breaks blocks or lights fires; 6 impact damage like vanilla. Not saved. */
+	/**
+	 * Of the vanilla block reactions to a projectile ({@code BlockState#onProjectileHit}), the ones that change no block
+	 * and light nothing: target (redstone pulse), bell, amethyst chime, big dripleaf tilt.
+	 */
+	static boolean harmlessBlockReaction(BlockState state) {
+		Block block = state.getBlock();
+		return block instanceof TargetBlock || block instanceof BellBlock || block instanceof AmethystBlock || block instanceof BigDripleafBlock;
+	}
+
+	/** {@code Projectile#onHitBlock} limited to {@link #harmlessBlockReaction}. */
+	static void safeBlockReaction(Projectile projectile, BlockHitResult hit) {
+		BlockState state = projectile.level().getBlockState(hit.getBlockPos());
+		if (harmlessBlockReaction(state)) state.onProjectileHit(projectile.level(), state, hit, projectile);
+	}
+
+	/** The shooting player, or null when gone (then the blast spares every player). */
+	static @Nullable ServerPlayer shooter(Projectile projectile) {
+		return projectile.getOwner() instanceof ServerPlayer player ? player : null;
+	}
+
+	/** Ghast fireball: 6 impact damage like vanilla, a safe {@link AbilitySupport#explode} blast, no block changes. Not saved. */
 	static final class PlayerFireball extends Fireball {
 		private final float power;
 
@@ -331,10 +357,17 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		@Override
 		protected void onHit(HitResult hit) {
 			super.onHit(hit);
-			if (level() instanceof ServerLevel && !isRemoved()) {
-				if (power > 0.0F) level().explode(this, getX(), getY(), getZ(), power, false, Level.ExplosionInteraction.NONE);
+			if (level() instanceof ServerLevel serverLevel && !isRemoved()) {
+				if (power > 0.0F) {
+					AbilitySupport.explode(serverLevel, this, damageSources().explosion(this, getOwner()), shooter(this), getX(), getY(), getZ(), power);
+				}
 				discard();
 			}
+		}
+
+		@Override
+		protected void onHitBlock(BlockHitResult hit) {
+			safeBlockReaction(this, hit);
 		}
 
 		@Override
@@ -354,7 +387,10 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 		}
 	}
 
-	/** Blaze fireball whose fire blocks follow mobGriefing like a blaze's (vanilla: always for a player owner). Not saved. */
+	/**
+	 * Blaze fireball that sets the entity it hits on fire but never places fire blocks (vanilla always would for a
+	 * player owner, ignoring spawn protection, adventure mode and claims) and changes no block. Not saved.
+	 */
 	static final class PlayerSmallFireball extends SmallFireball {
 		PlayerSmallFireball(Level level, LivingEntity owner, Vec3 direction) {
 			super(level, owner, direction);
@@ -362,13 +398,67 @@ public final class ShootProjectileBehavior implements Behavior<ShootProjectileBe
 
 		@Override
 		protected void onHitBlock(BlockHitResult hit) {
-			// Projectile#onHitBlock (targets, bells, …), then SmallFireball's fire placement gated by mobGriefing
-			BlockState state = level().getBlockState(hit.getBlockPos());
-			state.onProjectileHit(level(), state, hit, this);
-			if (level() instanceof ServerLevel serverLevel && serverLevel.getGameRules().get(GameRules.MOB_GRIEFING)) {
-				BlockPos pos = hit.getBlockPos().relative(hit.getDirection());
-				if (serverLevel.isEmptyBlock(pos)) serverLevel.setBlockAndUpdate(pos, BaseFireBlock.getState(serverLevel, pos));
+			safeBlockReaction(this, hit);
+		}
+
+		@Override
+		public boolean shouldBeSaved() {
+			return false;
+		}
+	}
+
+	/** Dragon fireball (vanilla breath cloud) that changes no block. Not saved. */
+	static final class PlayerDragonFireball extends DragonFireball {
+		PlayerDragonFireball(Level level, LivingEntity owner, Vec3 direction) {
+			super(level, owner, direction);
+		}
+
+		@Override
+		protected void onHitBlock(BlockHitResult hit) {
+			safeBlockReaction(this, hit);
+		}
+
+		@Override
+		public boolean shouldBeSaved() {
+			return false;
+		}
+	}
+
+	/**
+	 * Wither skull (reserved kind) whose blast never breaks blocks, whatever mobGriefing says: vanilla hit damage and
+	 * wither effect, then an {@link AbilitySupport#explode} blast (power 1) instead of vanilla's
+	 * {@code ExplosionInteraction.MOB} one. Never dangerous (the blue skull). Not saved.
+	 */
+	static final class PlayerWitherSkull extends WitherSkull {
+		PlayerWitherSkull(Level level, LivingEntity owner, Vec3 direction) {
+			super(level, owner, direction);
+		}
+
+		@Override
+		public void setDangerous(boolean value) {
+			super.setDangerous(false);
+		}
+
+		/** Projectile#onHit's dispatch (without its projectile-redirect branch), then our blast instead of WitherSkull's. */
+		@Override
+		protected void onHit(HitResult hit) {
+			if (hit.getType() == HitResult.Type.ENTITY && hit instanceof EntityHitResult entityHit) {
+				onHitEntity(entityHit);
+				level().gameEvent(GameEvent.PROJECTILE_LAND, hit.getLocation(), GameEvent.Context.of(this, null));
+			} else if (hit.getType() == HitResult.Type.BLOCK && hit instanceof BlockHitResult blockHit) {
+				onHitBlock(blockHit);
+				BlockPos pos = blockHit.getBlockPos();
+				level().gameEvent(GameEvent.PROJECTILE_LAND, pos, GameEvent.Context.of(this, level().getBlockState(pos)));
 			}
+			if (level() instanceof ServerLevel serverLevel && !isRemoved()) {
+				AbilitySupport.explode(serverLevel, this, damageSources().explosion(this, getOwner()), shooter(this), getX(), getY(), getZ(), 1.0F);
+				discard();
+			}
+		}
+
+		@Override
+		protected void onHitBlock(BlockHitResult hit) {
+			safeBlockReaction(this, hit);
 		}
 
 		@Override

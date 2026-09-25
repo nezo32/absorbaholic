@@ -225,4 +225,18 @@ public final class AbsorbCaps {
 	public static Optional<Clamp> clampFor(String attributeId) {
 		return Optional.ofNullable(CLAMP_BY_ATTRIBUTE.get(attributeId));
 	}
+
+	// ---- Ability caps (fix round 2) ----
+
+	/** Longest sneak_detonate fuse (10 s). */
+	public static final int SNEAK_DETONATE_MAX_FUSE_TICKS = 200;
+	/** Shulker bullet target search radius (shoot_projectile). */
+	public static final double SHULKER_BULLET_RANGE = 16.0;
+	/** Vanilla evoker fang damage: the base of shoot_projectile's evoker_fangs {@code damage} factor. */
+	public static final float EVOKER_FANG_BASE_DAMAGE = 6.0F;
+	/**
+	 * Gravity used to credit an air_jump burst against the fall distance: a burst of vertical speed v can lift the
+	 * player at most v² / (2 g) blocks (vanilla player gravity, drag ignored), and only that much is taken off.
+	 */
+	public static final double AIR_JUMP_FALL_CREDIT_GRAVITY = 0.08;
 }

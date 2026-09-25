@@ -59,6 +59,10 @@ import net.minecraft.world.entity.AreaEffectCloud;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.entity.projectile.EvokerFangs;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -66,9 +70,13 @@ import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.entity.projectile.arrow.Arrow;
 import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball;
 import net.minecraft.world.entity.projectile.hurtingprojectile.SmallFireball;
+import net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
@@ -277,7 +285,7 @@ public class BehaviorCGameTests {
 			h.assertTrue(TraitEngine.fireTrigger(p, Hook.AIR_JUMP, null), "first burst");
 			near(h, p.getDeltaMovement().y, 0.55, EPS, "level II velocity");
 			near(h, p.getDeltaMovement().x, 0.2, EPS, "horizontal kept");
-			near(h, p.fallDistance, 0.0, EPS, "fall distance reset");
+			near(h, p.fallDistance, 6.0 - 0.55 * 0.55 / 0.16, EPS, "fall distance lowered by the burst's height only");
 			near(h, exhaustion(p) - exhaustion, AbsorbCaps.AIR_JUMP_EXHAUSTION, 1.0E-4, "air jump costs 0.5 exhaustion");
 			h.assertValueEqual(timer(p, AbilitySupport.key(a)), now(h) + 8, "8 ticks between bursts");
 			h.assertFalse(TraitEngine.fireTrigger(p, Hook.AIR_JUMP, null), "burst cooldown");
@@ -294,6 +302,35 @@ public class BehaviorCGameTests {
 			p.setKnownMovement(Vec3.ZERO);
 			h.assertTrue(TraitEngine.fireTrigger(p, Hook.AIR_JUMP, null), "fast bee");
 			near(h, p.getDeltaMovement().y, AbsorbCaps.ABILITY_MAX_VELOCITY, EPS, "velocity capped at 1.6");
+		} finally {
+			remove(p);
+		}
+		h.succeed();
+	}
+
+	/** Review m4: one charge just above the ground must not turn a 200-block fall into a safe landing. */
+	@GameTest
+	public void airJumpDoesNotCancelALongFall(GameTestHelper h) {
+		fill(h, 0, Blocks.STONE);
+		ServerPlayer p = player(h, 3.5, 2, 3.5, 0, 0);
+		try {
+			give(p, 1, 0, source("bee_long_fall", List.of(entry(AirJumpBehavior.TYPE, "{\"charges\":[1],\"velocity\":[0.5],\"cooldown\":0}")), List.of()));
+			p.setOnGround(false);
+			p.setKnownMovement(new Vec3(0.0, -3.0, 0.0));
+			p.fallDistance = 200.0;
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.AIR_JUMP, null), "burst 1 block above the ground");
+			near(h, p.getDeltaMovement().y, 0.5, EPS, "burst velocity");
+			near(h, AirJumpBehavior.fallCredit(0.5), 0.5 * 0.5 / 0.16, EPS, "credit v²/2g");
+			near(h, p.fallDistance, 200.0 - AirJumpBehavior.fallCredit(0.5), EPS, "only the burst's height is taken off");
+			h.assertTrue(p.fallDistance > 190.0, "a single charge leaves a long fall lethal: " + p.fallDistance);
+
+			// a small hop: the credit never makes the fall distance negative
+			p.setOnGround(true);
+			tick(p, AirJumpBehavior.TYPE);
+			p.setOnGround(false);
+			p.fallDistance = 0.5;
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.AIR_JUMP, null), "second airtime");
+			near(h, p.fallDistance, 0.0, EPS, "clamped at 0");
 		} finally {
 			remove(p);
 		}
@@ -585,6 +622,85 @@ public class BehaviorCGameTests {
 		h.succeed();
 	}
 
+	/**
+	 * Review M2: with PvP off the blast neither hurts nor pushes another player, and it never touches pets, villagers,
+	 * armor stands or items; a zombie is hit. With PvP on, the other player is hurt.
+	 */
+	@GameTest
+	public void sneakDetonateSparesPlayersPetsVillagersAndThings(GameTestHelper h) {
+		fill(h, 0, Blocks.STONE);
+		GameRules rules = h.getLevel().getGameRules();
+		boolean pvp = rules.get(GameRules.PVP);
+		ServerPlayer p = player(h, 3.5, 1, 3.5, 0, 0);
+		ServerPlayer other = player(h, 5.5, 1, 3.5, 0, 0);
+		Mob villager = h.spawnWithNoFreeWill(EntityTypes.VILLAGER, new BlockPos(3, 1, 5));
+		Wolf wolf = h.spawnWithNoFreeWill(EntityTypes.WOLF, new BlockPos(1, 1, 3));
+		ArmorStand stand = h.spawn(EntityTypes.ARMOR_STAND, new BlockPos(3, 1, 1));
+		Mob zombie = h.spawnWithNoFreeWill(EntityTypes.ZOMBIE, new BlockPos(5, 1, 5));
+		Vec3 at = h.absoluteVec(new Vec3(2.0, 1.0, 4.5));
+		ItemEntity item = new ItemEntity(h.getLevel(), at.x, at.y, at.z, new ItemStack(Items.DIAMOND));
+		item.setDeltaMovement(Vec3.ZERO);
+		h.getLevel().addFreshEntity(item);
+		try {
+			wolf.tame(other);
+			give(p, 3, 0, source("creeper_safe", List.of(entry(SneakDetonateBehavior.TYPE, "{\"power\":[3],\"fuse\":0,\"cooldown\":[600]}")), List.of()));
+			ActiveBehavior<?> d = active(p, SneakDetonateBehavior.TYPE);
+			rules.set(GameRules.PVP, false, h.getLevel().getServer());
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_DOUBLE_TAP, null), "fuse 0: detonates at once");
+			h.assertTrue(zombie.getHealth() < zombie.getMaxHealth(), "a hostile mob is hit: " + zombie.getHealth());
+			h.assertValueEqual(other.getHealth(), other.getMaxHealth(), "PvP off: the other player is not hurt");
+			near(h, other.getDeltaMovement().length(), 0.0, EPS, "PvP off: and not knocked back");
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth(), "villager spared");
+			near(h, villager.getDeltaMovement().length(), 0.0, EPS, "villager not pushed");
+			h.assertValueEqual(wolf.getHealth(), wolf.getMaxHealth(), "tamed wolf spared");
+			near(h, wolf.getDeltaMovement().length(), 0.0, EPS, "tamed wolf not pushed");
+			h.assertTrue(stand.isAlive(), "armor stand spared");
+			h.assertTrue(item.isAlive(), "item spared");
+			near(h, item.getDeltaMovement().length(), 0.0, EPS, "item not pushed");
+
+			rules.set(GameRules.PVP, true, h.getLevel().getServer());
+			expire(p, AbilitySupport.key(d));
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_DOUBLE_TAP, null), "second blast");
+			h.assertTrue(other.getHealth() < other.getMaxHealth(), "PvP on: the other player is hurt: " + other.getHealth());
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth(), "villager still spared");
+		} finally {
+			rules.set(GameRules.PVP, pvp, h.getLevel().getServer());
+			villager.discard();
+			wolf.discard();
+			stand.discard();
+			zombie.discard();
+			item.discard();
+			remove(other);
+			remove(p);
+		}
+		h.succeed();
+	}
+
+	/** Review m6: an entry's timer keys are built once, not per call (per-tick hot paths). */
+	@GameTest
+	public void abilityKeysAreCachedPerEntry(GameTestHelper h) {
+		ServerPlayer p = player(h, 1.5, 1, 1.5, 0, 0);
+		try {
+			give(p, 1, 1, source("keys", List.of(entry(SneakDetonateBehavior.TYPE, "{\"power\":[1],\"cooldown\":[600]}")),
+					List.of(entry(SneakDetonateBehavior.TYPE, "{\"power\":[1],\"cooldown\":[600]}"))));
+			List<ActiveBehavior<?>> both = TraitEngine.active(p).all().stream().filter(a -> a.type() == SneakDetonateBehavior.TYPE).toList();
+			h.assertValueEqual(both.size(), 2, "trait and weakness entry");
+			ActiveBehavior<?> trait = both.stream().filter(a -> !a.weakness()).findFirst().orElseThrow();
+			ActiveBehavior<?> weak = both.stream().filter(ActiveBehavior::weakness).findFirst().orElseThrow();
+			h.assertTrue(AbilitySupport.key(trait) == AbilitySupport.key(trait), "same key instance every call");
+			h.assertTrue(SneakDetonateBehavior.fuseKey(trait) == SneakDetonateBehavior.fuseKey(trait), "same suffixed key instance");
+			h.assertValueEqual(AbilitySupport.key(trait), Identifier.fromNamespaceAndPath("absorbaholic", "sneak_detonate/absorbaholic_test/behc/keys"),
+					"key format unchanged");
+			h.assertValueEqual(SneakDetonateBehavior.fuseKey(weak),
+					Identifier.fromNamespaceAndPath("absorbaholic", "sneak_detonate/absorbaholic_test/behc/keys/weakness/fuse"), "weakness side keeps its own keys");
+			h.assertFalse(AbilitySupport.key(trait).equals(AbilitySupport.key(weak)), "sides differ");
+			h.assertTrue(FlightBehavior.lockKey(trait) == FlightBehavior.lockKey(trait), "other suffixes are cached too");
+		} finally {
+			remove(p);
+		}
+		h.succeed();
+	}
+
 	// ---- shoot_projectile ------------------------------------------------------------------------------------
 
 	@GameTest
@@ -728,6 +844,102 @@ public class BehaviorCGameTests {
 		});
 	}
 
+	/**
+	 * Review M2 (fireball): the blast next to the wall spares a villager, a tamed wolf, an armor stand and an item, and
+	 * still hurts a zombie.
+	 */
+	@GameTest(maxTicks = 120)
+	public void shootProjectileFireballBlastSparesPetsVillagersAndThings(GameTestHelper h) {
+		fill(h, 0, Blocks.STONE);
+		for (int y = 1; y <= 4; y++) {
+			for (int z = 1; z <= 7; z++) h.setBlock(new BlockPos(7, y, z), Blocks.STONE);
+		}
+		ServerPlayer p = player(h, 0.5, 1, 4.5, 0, 0);
+		ahead(h, p, 0.5, 1, 4.5);
+		Mob villager = h.spawnWithNoFreeWill(EntityTypes.VILLAGER, new BlockPos(6, 1, 2));
+		Wolf wolf = h.spawnWithNoFreeWill(EntityTypes.WOLF, new BlockPos(6, 1, 6));
+		wolf.tame(p);
+		ArmorStand stand = h.spawn(EntityTypes.ARMOR_STAND, new BlockPos(5, 1, 6));
+		Mob zombie = h.spawnWithNoFreeWill(EntityTypes.ZOMBIE, new BlockPos(5, 1, 2));
+		Vec3 at = h.absoluteVec(new Vec3(6.0, 1.0, 4.5));
+		ItemEntity item = new ItemEntity(h.getLevel(), at.x, at.y, at.z, new ItemStack(Items.DIAMOND));
+		item.setDeltaMovement(Vec3.ZERO);
+		h.getLevel().addFreshEntity(item);
+		give(p, 3, 0, source("ghast_safe", List.of(entry(ShootProjectileBehavior.TYPE,
+				"{\"projectile\":\"fireball\",\"count\":[1],\"explosion_power\":[2],\"cooldown\":[100]}")), List.of()));
+		h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "fired");
+		Fireball ball = owned(h, p, Fireball.class).getFirst();
+		h.succeedWhen(() -> {
+			h.assertTrue(ball.isRemoved(), "exploded on the wall");
+			h.assertTrue(zombie.getHealth() < zombie.getMaxHealth(), "the zombie is hit: " + zombie.getHealth());
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth(), "villager spared");
+			h.assertValueEqual(wolf.getHealth(), wolf.getMaxHealth(), "tamed wolf spared");
+			h.assertTrue(stand.isAlive(), "armor stand spared");
+			h.assertTrue(item.isAlive(), "item spared");
+			villager.discard();
+			wolf.discard();
+			stand.discard();
+			zombie.discard();
+			item.discard();
+			remove(p);
+		});
+	}
+
+	/** Review M3: a player's small fireball never places fire and never primes TNT or lights anything it hits. */
+	@GameTest(maxTicks = 120)
+	public void shootProjectileSmallFireballNeverPlacesFire(GameTestHelper h) {
+		fill(h, 0, Blocks.STONE);
+		for (int y = 1; y <= 4; y++) {
+			for (int z = 1; z <= 7; z++) h.setBlock(new BlockPos(6, y, z), y == 2 && z == 4 ? Blocks.TNT : Blocks.OAK_PLANKS);
+		}
+		ServerPlayer p = player(h, 0.5, 1, 4.5, 0, 0);
+		look(h, p, new Vec3(0.5, 1, 4.5), new Vec3(6.0, 2.5, 4.5));
+		give(p, 3, 0, source("blaze_safe", List.of(entry(ShootProjectileBehavior.TYPE,
+				"{\"projectile\":\"small_fireball\",\"count\":[3],\"cooldown\":[20]}")), List.of()));
+		h.assertTrue(h.getLevel().getGameRules().get(GameRules.MOB_GRIEFING), "mobGriefing on: vanilla would place fire");
+		h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "fired");
+		List<SmallFireball> balls = owned(h, p, SmallFireball.class);
+		h.assertValueEqual(balls.size(), 3, "three fireballs");
+		h.succeedWhen(() -> {
+			for (SmallFireball b : balls) h.assertTrue(b.isRemoved(), "all hit the wall");
+			for (int x = 0; x < 8; x++) {
+				for (int y = 1; y <= 5; y++) {
+					for (int z = 0; z < 8; z++) h.assertBlockNotPresent(Blocks.FIRE, new BlockPos(x, y, z));
+				}
+			}
+			h.assertBlockPresent(Blocks.TNT, new BlockPos(6, 2, 4));
+			h.assertTrue(h.getLevel().getEntitiesOfClass(PrimedTnt.class, new AABB(h.absolutePos(BlockPos.ZERO)).inflate(10)).isEmpty(), "no primed TNT");
+			remove(p);
+		});
+	}
+
+	/** Review m5: the reserved wither_skull kind never breaks blocks, even with mobGriefing on, and is never dangerous. */
+	@GameTest(maxTicks = 120)
+	public void shootProjectileWitherSkullNeverBreaksBlocks(GameTestHelper h) {
+		fill(h, 0, Blocks.STONE);
+		for (int y = 1; y <= 4; y++) {
+			for (int z = 1; z <= 7; z++) h.setBlock(new BlockPos(6, y, z), Blocks.DIRT);
+		}
+		ServerPlayer p = player(h, 0.5, 1, 4.5, 0, 0);
+		ahead(h, p, 0.5, 1, 4.5);
+		give(p, 1, 0, source("wither", List.of(entry(ShootProjectileBehavior.TYPE, "{\"projectile\":\"wither_skull\",\"count\":[1],\"cooldown\":[40]}")),
+				List.of()));
+		h.assertTrue(h.getLevel().getGameRules().get(GameRules.MOB_GRIEFING), "mobGriefing on: a vanilla skull would break dirt");
+		h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "fired");
+		List<WitherSkull> skulls = owned(h, p, WitherSkull.class);
+		h.assertValueEqual(skulls.size(), 1, "one skull");
+		WitherSkull skull = skulls.getFirst();
+		skull.setDangerous(true);
+		h.assertFalse(skull.isDangerous(), "never a dangerous (blue) skull");
+		h.succeedWhen(() -> {
+			h.assertTrue(skull.isRemoved(), "exploded on the wall");
+			for (int y = 1; y <= 4; y++) {
+				for (int z = 1; z <= 7; z++) h.assertBlockPresent(Blocks.DIRT, new BlockPos(6, y, z));
+			}
+			remove(p);
+		});
+	}
+
 	// ---- sonic_boom ------------------------------------------------------------------------------------------
 
 	@GameTest
@@ -762,6 +974,51 @@ public class BehaviorCGameTests {
 		} finally {
 			first.discard();
 			second.discard();
+			remove(p);
+		}
+		h.succeed();
+	}
+
+	/**
+	 * Review M4: through walls only hostile mobs are hit; a villager behind a wall is passed by (the zombie behind it is
+	 * hit), in the open the villager is hit, and with PvP off another player in the way is passed by.
+	 */
+	@GameTest
+	public void sonicBoomNeedsLineOfSightForNonHostiles(GameTestHelper h) {
+		GameRules rules = h.getLevel().getGameRules();
+		boolean pvp = rules.get(GameRules.PVP);
+		for (int y = 1; y <= 3; y++) h.setBlock(new BlockPos(2, y, 4), Blocks.STONE);
+		ServerPlayer p = player(h, 0.5, 1, 4.5, 0, 0);
+		ahead(h, p, 0.5, 1, 4.5);
+		Mob villager = h.spawnWithNoFreeWill(EntityTypes.VILLAGER, new BlockPos(4, 1, 4));
+		Mob zombie = h.spawnWithNoFreeWill(EntityTypes.ZOMBIE, new BlockPos(7, 1, 4));
+		ServerPlayer other = null;
+		try {
+			give(p, 1, 0, source("warden_los", List.of(entry(SonicBoomBehavior.TYPE, "{\"damage\":[6],\"range\":[15],\"cooldown\":[200]}")), List.of()));
+			ActiveBehavior<?> b = active(p, SonicBoomBehavior.TYPE);
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "boom");
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth(), "villager behind the wall: not a target");
+			h.assertValueEqual(zombie.getHealth(), zombie.getMaxHealth() - 6.0F, "zombie behind the wall: hit");
+
+			for (int y = 1; y <= 3; y++) h.setBlock(new BlockPos(2, y, 4), Blocks.AIR);
+			expire(p, AbilitySupport.key(b));
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "boom in the open");
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth() - 6.0F, "villager in sight: hit");
+
+			villager.discard(); // hurt this tick (invulnerable): a fresh one takes its place
+			villager = h.spawnWithNoFreeWill(EntityTypes.VILLAGER, new BlockPos(4, 1, 4));
+			other = player(h, 2.5, 1, 4.5, 0, 0);
+			rules.set(GameRules.PVP, false, h.getLevel().getServer());
+			expire(p, AbilitySupport.key(b));
+			h.assertTrue(TraitEngine.fireTrigger(p, Hook.SNEAK_SWING, null), "boom past a player");
+			h.assertValueEqual(other.getHealth(), other.getMaxHealth(), "PvP off: the player is not hurt");
+			near(h, other.getDeltaMovement().length(), 0.0, EPS, "PvP off: nor knocked back");
+			h.assertValueEqual(villager.getHealth(), villager.getMaxHealth() - 6.0F, "the ray passed the player and hit the villager");
+		} finally {
+			rules.set(GameRules.PVP, pvp, h.getLevel().getServer());
+			villager.discard();
+			zombie.discard();
+			if (other != null) remove(other);
 			remove(p);
 		}
 		h.succeed();

@@ -21,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 
 /**
  * {@code absorbaholic:glide} (phantom), trigger {@code air_jump} once no air-jump charges are left:
@@ -30,7 +31,9 @@ import net.minecraft.world.entity.LivingEntity;
  *     {@code EntityElytraEvents.CUSTOM} (registered by the engine; never a canGlide mixin).</li>
  * <li>The server alone decides when a glide may run: the trigger starts it ({@code startFallFlying}, synced to the
  *     client), and this class's {@code EntityElytraEvents.ALLOW} listener refuses any other elytra-less glide of a
- *     player with an active glide entry (a client's own START_FALL_FLYING, a restart), so vanilla stops it.</li>
+ *     player with an active glide entry (a client's own START_FALL_FLYING, a restart), so vanilla stops it. On a
+ *     modded client the same listener keeps the LocalPlayer from starting the glide itself (no local start that the
+ *     server then cancels while air-jump charges remain): it glides once the server's flag arrives.</li>
  * <li>It ends on landing, in water or lava, when riding, or after {@code max_ticks}; after that no new glide until
  *     the player touches the ground. Firework boosts and fly_into_wall damage work as with an elytra. A player
  *     wearing a real glider is left to vanilla.</li>
@@ -54,19 +57,27 @@ public final class GlideBehavior implements Behavior<GlideBehavior.Params> {
 
 	public static final BehaviorType<Params> TYPE = BehaviorRegistry.register("glide", Params.CODEC, new GlideBehavior());
 
-	/** Registers the server-side ALLOW gate (common init). */
+	/** Registers the ALLOW gate, both sides (common init). */
 	static void registerEvents() {
 		EntityElytraEvents.ALLOW.register(GlideBehavior::allowGlide);
 	}
 
-	/** For a player with an active glide entry, only our own trigger may run an elytra-less glide on the server. */
+	/**
+	 * The glide gate. Server: for a player with an active glide entry, only our own trigger may run an elytra-less
+	 * glide. Client (the modded owner's LocalPlayer, whose synced flags include GLIDE): it never starts an elytra-less
+	 * glide itself, because only the server knows whether an air-jump charge or the glide wins the press; the server's
+	 * trigger starts it and the synced fall-flying flag makes the client glide one round trip later. Without this the
+	 * client began gliding at every airborne jump press (canGlide is true through CUSTOM) and the server stopped it
+	 * again: a visible flicker whenever air-jump charges remained. Client-side, canGlide is only consulted by
+	 * {@code tryToStartFallFlying} (whose own check requires not gliding yet), so a running glide is never affected.
+	 */
 	private static boolean allowGlide(LivingEntity entity) {
-		if (!(entity instanceof ServerPlayer player)) return true;
+		if (!(entity instanceof Player player)) return true;
 		try {
-			if (!((MovementFlagsHolder) player).absorbaholic$movement().has(MovementFlags.GLIDE) || hasRealGlider(player) || !hasGlideEntry(player)) {
-				return true;
-			}
-			return PlayerData.runtime(player).behaviorState.get(STATE_KEY) instanceof GlideState st && st.gliding;
+			if (!((MovementFlagsHolder) player).absorbaholic$movement().has(MovementFlags.GLIDE) || hasRealGlider(player)) return true;
+			if (player.level().isClientSide()) return player.isFallFlying();
+			if (!(player instanceof ServerPlayer serverPlayer) || !hasGlideEntry(serverPlayer)) return true;
+			return PlayerData.runtime(serverPlayer).behaviorState.get(STATE_KEY) instanceof GlideState st && st.gliding;
 		} catch (RuntimeException e) {
 			Absorbaholic.LOGGER.debug("Absorbaholic glide gate failed", e);
 			return true;

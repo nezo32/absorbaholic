@@ -22,7 +22,11 @@ import net.minecraft.world.phys.Vec3;
  * {@code absorbaholic:air_jump} (bee), trigger {@code air_jump}: {@code charges} [L] jumps per airtime,
  * {@code velocity} [L] upward (capped at {@link AbsorbCaps#ABILITY_MAX_VELOCITY}), {@code cooldown} ticks between
  * bursts (a plain number, not level-scaled). A burst sets {@code vy = max(vy, velocity)} on the movement the client
- * last reported, resets the fall distance, and sends the motion (server authoritative, so vanilla clients follow).
+ * last reported and sends the motion (server authoritative, so vanilla clients follow). It does <b>not</b> reset the
+ * fall distance: it only takes off the height the burst can lift the player ({@link #fallCredit}, v² / 2g), because
+ * that height is fallen again on the way down. So a burst neither adds fall damage nor cancels a long fall; landing
+ * after bursts hurts like falling from the highest point reached (a burst just above the ground after a 200-block
+ * fall still lands at about 200 blocks).
  * Charges refill on the ground, in water or lava, on climbable blocks and when riding. {@code glide} takes over only
  * when no air-jump charges are left ({@link #chargesLeft}). The engine charges AIR_JUMP_EXHAUSTION per burst.
  */
@@ -72,9 +76,10 @@ public final class AirJumpBehavior implements Behavior<AirJumpBehavior.Params> {
 		AbilitySupport.setTimer(player, AbilitySupport.key(self), p.cooldown());
 
 		Vec3 v = player.getKnownMovement();
-		player.setDeltaMovement(v.x, Math.max(v.y, p.velocityAt(self.level())), v.z);
+		double velocity = p.velocityAt(self.level());
+		player.setDeltaMovement(v.x, Math.max(v.y, velocity), v.z);
 		AbilitySupport.syncMotion(player);
-		player.resetFallDistance();
+		player.fallDistance = Math.max(0.0, player.fallDistance - fallCredit(velocity));
 		player.level().sendParticles(ParticleTypes.CLOUD, player.getX(), player.getY(), player.getZ(), 8, 0.3, 0.05, 0.3, 0.02);
 		player.level().playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BAT_TAKEOFF, SoundSource.PLAYERS, 0.6F, 1.4F);
 		return true;
@@ -97,6 +102,14 @@ public final class AirJumpBehavior implements Behavior<AirJumpBehavior.Params> {
 			if (st == null || refills(player) || st.used < charges) return true;
 		}
 		return false;
+	}
+
+	/**
+	 * The most height a burst of upward speed {@code velocity} can gain: v² / (2 g) with vanilla gravity
+	 * ({@link AbsorbCaps#AIR_JUMP_FALL_CREDIT_GRAVITY}), drag ignored (so it is an upper bound).
+	 */
+	public static double fallCredit(double velocity) {
+		return velocity > 0.0 ? velocity * velocity / (2.0 * AbsorbCaps.AIR_JUMP_FALL_CREDIT_GRAVITY) : 0.0;
 	}
 
 	/** Touching ground, fluid or a climbable, or riding: a new airtime. */
