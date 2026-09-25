@@ -5,7 +5,7 @@ Alt: *You are what you absorb.*
 
 ## CurseForge description
 
-> **Absorbaholic** lets you eat the world. Sneak with an empty hand, hold use on a block or a mob at low health, and **absorb it**: the thing is gone, and you keep **one of its traits and one of its weaknesses**. Obsidian makes you blast-proof but slow. A blaze lets you throw fireballs, and rain starts to hurt. The warden gives you a sonic boom and pulses of darkness. There are **128 sources** (blocks and mobs, from dirt to the Ender Dragon), each stacking to **level III**. Every absorption can **mutate** (15 %: one side jumps +2) or come out **pure** (2 %: no weakness gained). Hold up to 20 sources at once, and your oldest one makes room for the next. The mode is a toggle on the world-creation screen, saved with the world, and operators can flip it any time with `/absorbaholic on|off`. Everything is data-driven, so datapacks can add, tweak or remove any source. A **Fabric mod for Java 26.2–26.3**, in English and Russian.
+> **Absorbaholic** lets you eat the world. Sneak with both hands empty, hold use on a block or a mob at low health, and **absorb it**: the thing is gone, and you keep **one of its traits and one of its weaknesses**. Obsidian makes you blast-proof but slow. A blaze lets you throw fireballs, and rain starts to hurt. The warden gives you a sonic boom and pulses of darkness. There are **128 sources** (blocks and mobs, from dirt to the Ender Dragon), each stacking to **level III**. Every absorption can **mutate** (15 %: one side jumps +2) or come out **pure** (2 %: no weakness gained). Hold up to 20 sources at once, and your oldest one makes room for the next. The mode is a toggle on the world-creation screen, saved with the world, and operators can flip it any time with `/absorbaholic on|off`. Everything is data-driven, so datapacks can add, tweak or remove any source. A **Fabric mod for Java 26.2–26.3**, in English and Russian.
 
 ## Features
 - 🧬 **Absorb anything:** 128 sources covering over a thousand blocks and 72 mobs. Sneak, hold use for 1.5 s, and it's yours.
@@ -14,7 +14,7 @@ Alt: *You are what you absorb.*
 - 🎲 **Mutations:** 15 % of absorptions mutate (+2 on one side), 2 % come out pure (no weakness gained), with their own fanfare.
 - ⚡ **Real abilities:** blink like an enderman, throw fireballs, sonic-boom, glide, double-jump, climb walls, walk on lava. No extra keys: sneak + swing, sneak + jump, double-tap sneak.
 - 🔍 **Discover as you go:** sneak and look at something to see what it gives. Sources nobody has absorbed yet show `???`.
-- 📜 **Traits screen:** press K for every trait you carry, with levels, tiers and mutation tags.
+- 📜 **My Traits screen:** press K for every trait you carry, with levels, tiers and mutation tags.
 - 🌍 **Per-world settings:** mode, keep-on-death, hints and trait slots, all switchable by operators with `/absorbaholic`.
 - 🛡️ **Safety caps:** damage reduction, speed, health, armor and weakness damage are all capped, so nothing one-shots you and no build is truly immortal.
 - 🔕 **Your call on noise:** turn the absorb sound, the messages, or both off (Mod Menu or `/absorbaholic-notify`).
@@ -40,57 +40,113 @@ Alt: *You are what you absorb.*
 | Bonus green (+) | `#80FF40` |
 | Hand skin light / mid / shade / dark | `#F4C9A0` / `#D69A6E` / `#9C6246` / `#6A3C2C` |
 
-In-game text (proposal, the feedback code isn't styled yet):
+In-game text colors (as implemented):
 
 | Where | Color |
 |---|---|
-| 🧬 and the source name (title, broadcasts, hint) | `§d` light purple, closest to the glint magenta |
-| Trait name + level | `§a` green |
-| Weakness name + level | `§c` red |
-| Mutation subtitle and broadcast | `§6` gold |
+| Title `🧬 Absorbed: <source>` | default white |
+| Source name in the hint and on the traits screen | its tier color: Common white, Uncommon `§a`, Rare `§b`, Epic `§d`, Legendary `§6` |
+| Trait name + level (actionbar, hint, screen) | `§a` green |
+| Weakness name + level | `§c` red (a pure entry with no weakness: aqua) |
+| Trait-mutation subtitle and broadcast | `§d` light purple |
+| Weakness-mutation subtitle | `§5` dark purple |
 | Pure subtitle and broadcast | `§b` aqua |
-| Separators (` · `), `???`, refusal reasons | `§7` gray |
+| Refusal reasons | `§c` red |
+| Eviction notice | `§7` gray |
+| `/absorbaholic` status header | `§6` gold |
 
-Build the colors with `Component.withStyle(ChatFormatting.X)`, not `§` codes inside lang values, so Russian and
-English stay identical in markup.
+Colors are applied in code (`withStyle(ChatFormatting.X)`), never as `§` codes inside lang values, so English and
+Russian carry identical markup.
 
 ## Player-facing strings (en_us)
 
-Core UX keys (ARCHITECTURE §10). Only the tier keys are merged into `en_us.json` so far. The rest are the planned
-keys with proposed text: the owning work packages deliver the final wording as lang fragments, and the lead updates
-this table after the merge.
+The core UX keys as merged in `fabric/src/main/resources/assets/absorbaholic/lang/en_us.json` (`ru_ru.json` has the
+same keys). The full file also has the `.status`, `.none`, `.unknown` and tooltip variants.
 
-| Key | Text | Status |
+| Key | Text | Where |
 |---|---|---|
-| `absorbaholic.tier.common` / `uncommon` / `rare` / `epic` / `legendary` | Common / Uncommon / Rare / Epic / Legendary | merged |
-| `absorbaholic.createWorld.toggle` | Absorbaholic Mode | planned (WP-CW) |
-| `absorbaholic.createWorld.toggle.tooltip` | Sneak with an empty hand and hold use on blocks and weakened mobs to absorb their traits, and their weaknesses. Saved with this world. Operators can change it later with /absorbaholic on\|off. | planned (WP-CW) |
-| `absorbaholic.command.on` | Absorbaholic Mode is now ON for this world | planned (WP-CMD) |
-| `absorbaholic.command.off` | Absorbaholic Mode is now OFF for this world | planned (WP-CMD) |
-| `absorbaholic.command.status.on` / `.off` | Absorbaholic Mode is ON / OFF in this world | planned (WP-CMD) |
-| `absorbaholic.absorbed.title` | `🧬 Absorbed: %s` | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.title.short` | `🧬 Absorbed!` | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.actionbar` | `%1$s %2$s · %3$s %4$s` (trait, level, weakness, level) | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.actionbar.pure` | `%1$s %2$s · no weakness` | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.subtitle.mutate_trait` | Mutation! Trait +2 | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.subtitle.mutate_weakness` | Mutation! Weakness +2 | planned (WP-ABSORB) |
-| `absorbaholic.absorbed.subtitle.pure` | Pure absorption! | planned (WP-ABSORB) |
-| `absorbaholic.announce.<outcome>` | `%1$s absorbed %2$s and mutated!` / `… absorbed %2$s purely!` | planned (WP-ABSORB) |
-| `absorbaholic.message.evicted` | Your oldest source, %s, made room. | planned (WP-ABSORB) |
-| `absorbaholic.message.wiped` | All or nothing: every trait is gone. | planned (WP-PLAYER) |
-| `absorbaholic.settings.title` | Absorbaholic Settings | planned (WP-UI) |
-| `absorbaholic.settings.notifySound` (+ `.tooltip`) | Absorb sound | planned (WP-UI) |
-| `absorbaholic.settings.notifyMessage` (+ `.tooltip`) | Absorb messages | planned (WP-UI) |
-| `absorbaholic.command.notify.sound` / `.message` | Absorb sound: %s / Absorb messages: %s | planned (WP-CLIENT) |
-| `key.absorbaholic.traits` | Traits screen | planned (WP-UI) |
+| `absorbaholic.createWorld.toggle` | Absorbaholic Mode | Create World (Game tab) |
+| `absorbaholic.createWorld.toggle.tooltip` | Sneak with an empty hand and hold Use on a block, a fluid or a badly hurt mob to absorb it: you gain its trait, and its weakness too. Saved with this world. Operators can change it later with /absorbaholic on\|off. | Create World (Game tab) |
+| `absorbaholic.absorbed.title` | 🧬 Absorbed: %s | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.title.short` | 🧬 Absorbed! | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.subtitle.joined` | %s · %s | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.actionbar` | %s %s · %s %s | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.actionbar.pure` | %s %s · no weakness | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.subtitle.mutate_trait` | Mutation! The trait surged | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.subtitle.mutate_weakness` | Mutation! The weakness surged | Absorbing (title, actionbar, chat) |
+| `absorbaholic.absorbed.subtitle.pure` | Pure absorption! No weakness this time | Absorbing (title, actionbar, chat) |
+| `absorbaholic.announce.mutate_trait` | 🧬 %s absorbed %s and MUTATED: the trait surged! | Absorbing (title, actionbar, chat) |
+| `absorbaholic.announce.mutate_weakness` | 🧬 %s absorbed %s and MUTATED: the weakness surged! | Absorbing (title, actionbar, chat) |
+| `absorbaholic.announce.pure` | ✨ %s pulled off a PURE absorption of %s: the weakness didn't grow! | Absorbing (title, actionbar, chat) |
+| `absorbaholic.message.evicted` | No trait slots left: %s faded away to make room. | Absorbing (title, actionbar, chat) |
+| `absorbaholic.message.lost` | ☠ Your absorbed traits died with you (keep-on-death is off). | Absorbing (title, actionbar, chat) |
+| `absorbaholic.message.wiped` | ☠ A deathly curse wiped out all your absorbed traits! | Absorbing (title, actionbar, chat) |
+| `absorbaholic.refuse.bees_inside` | Bees are home: wait until the hive is empty | Refusals (actionbar) |
+| `absorbaholic.refuse.container_not_empty` | Empty it first: its contents would be lost | Refusals (actionbar) |
+| `absorbaholic.refuse.cooldown` | Still digesting… %s s | Refusals (actionbar) |
+| `absorbaholic.refuse.disabled` | Absorbaholic Mode is off in this world | Refusals (actionbar) |
+| `absorbaholic.refuse.max_level` | %s is already at max level | Refusals (actionbar) |
+| `absorbaholic.refuse.mob_carries_items` | Take its gear first: armor, saddle or chest would be lost | Refusals (actionbar) |
+| `absorbaholic.refuse.mob_health` | Too healthy: weaken it to %s%% health or less | Refusals (actionbar) |
+| `absorbaholic.refuse.not_allowed` | You're not allowed to break blocks here | Refusals (actionbar) |
+| `absorbaholic.refuse.protected` | This bedrock holds the world together | Refusals (actionbar) |
+| `absorbaholic.hint.empty_hand` | Empty your hand to absorb | Sneak hint (HUD) |
+| `absorbaholic.hint.flowing` | Only a source block works | Sneak hint (HUD) |
+| `absorbaholic.hint.maxed` | Already at max level | Sneak hint (HUD) |
+| `absorbaholic.hint.needs_health` | Weaken it to %s%% health first | Sneak hint (HUD) |
+| `absorbaholic.hint.not_absorbable` | Not absorbable | Sneak hint (HUD) |
+| `absorbaholic.hint.protected` | Protected: holds the world together | Sneak hint (HUD) |
+| `absorbaholic.hint.trait` | Trait: %s | Sneak hint (HUD) |
+| `absorbaholic.hint.unknown` | ??? | Sneak hint (HUD) |
+| `absorbaholic.hint.weakness` | Weakness: %s | Sneak hint (HUD) |
+| `absorbaholic.command.mode.on` | Absorbaholic Mode is now ON for this world | Commands |
+| `absorbaholic.command.mode.off` | Absorbaholic Mode is now OFF for this world | Commands |
+| `absorbaholic.command.mode.status.on` | Absorbaholic Mode is ON in this world | Commands |
+| `absorbaholic.command.mode.status.off` | Absorbaholic Mode is OFF in this world | Commands |
+| `absorbaholic.command.status.header` | Absorbaholic in this world: | Commands |
+| `absorbaholic.command.keep_on_death.on` | Players now keep their traits on death in this world | Commands |
+| `absorbaholic.command.keep_on_death.off` | Players now lose their traits on death in this world | Commands |
+| `absorbaholic.command.hints.on` | Absorb hints are now ON for this world | Commands |
+| `absorbaholic.command.hints.off` | Absorb hints are now OFF for this world | Commands |
+| `absorbaholic.command.max.set` | Players can now hold up to %s traits in this world | Commands |
+| `absorbaholic.command.max.clamped` | %s is outside %s–%s: players can now hold up to %s traits in this world | Commands |
+| `absorbaholic.command.traits.header` | Traits of %s (%s/%s): | Commands |
+| `absorbaholic.command.traits.entry` | %s: %s %s · %s %s | Commands |
+| `absorbaholic.command.traits.dormant` | Absorbaholic Mode is OFF: these traits are dormant | Commands |
+| `absorbaholic.command.remove.done` | Removed %s from the traits of %s | Commands |
+| `absorbaholic.command.reset.done` | Reset %s: %s traits removed | Commands |
+| `absorbaholic.command.notify.sound` | Absorb sounds: %s | Commands |
+| `absorbaholic.command.notify.message` | Absorb messages: %s | Commands |
+| `absorbaholic.settings.title` | Absorbaholic Settings | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.notifySound` | Absorb Sound | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.notifySound.tooltip` | Play a sound when you absorb something. | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.notifyMessage` | Absorb Message | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.notifyMessage.tooltip` | Show the title and the actionbar line when you absorb something. | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.traits` | My Traits | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.settings.traits.tooltip` | Everything you have absorbed in this world. | Settings screen (Mod Menu) and keybind |
+| `key.absorbaholic.traits` | Open Traits | Settings screen (Mod Menu) and keybind |
+| `key.category.absorbaholic.main` | Absorbaholic | Settings screen (Mod Menu) and keybind |
+| `absorbaholic.screen.traits.title.own` | My Traits | Traits screen |
+| `absorbaholic.screen.traits.title` | Traits of %s | Traits screen |
+| `absorbaholic.screen.traits.count` | %s / %s traits | Traits screen |
+| `absorbaholic.screen.traits.empty.own` | Nothing absorbed yet. Sneak with an empty hand and hold Use on a block, a fluid or a badly hurt mob. | Traits screen |
+| `absorbaholic.screen.traits.inactive` | Source removed by a datapack: inactive | Traits screen |
+| `absorbaholic.screen.traits.status.mode_off` | Absorbaholic Mode is off: all traits are dormant | Traits screen |
+| `absorbaholic.screen.traits.status.creative` | Dormant in Creative and Spectator | Traits screen |
+| `absorbaholic.screen.traits.tag.mutated` | Mutated | Traits screen |
+| `absorbaholic.screen.traits.tag.pure` | Pure | Traits screen |
+| `death.attack.absorbaholic.weakness` | %1$s succumbed to an absorbed weakness | Death message |
+| `death.attack.absorbaholic.weakness.player` | %1$s succumbed to an absorbed weakness while fighting %2$s | Death message |
 
-**Trait, weakness and source names** come from the data: `absorbaholic.trait.<key>`, `absorbaholic.weakness.<key>`
-(each with `.desc`) and `absorbaholic.source.<id>` for family sources (256 + 244 + 53 keys, merged). Single-block
-and single-mob sources use the vanilla name of their target.
+**Trait, weakness and source names** come from the data: `absorbaholic.trait.<key>` and
+`absorbaholic.weakness.<key>` (128 and 122 names, each with a `.desc`), `absorbaholic.tier.<tier>`, and
+`absorbaholic.source.<id>` for the 53 family sources. Sources with a single direct target use the vanilla name of
+that block or mob.
 
-**Absorbed feedback:** the title and actionbar follow ARCHITECTURE §6.3–6.4. Level numerals use
-`enchantment.level.N`, so `Blast Proof III` reads the same as vanilla enchantment levels. Server-built text goes
-through `Texts.tr`, so vanilla clients see the English fallback instead of raw keys.
+**Absorbed feedback:** mod clients measure the title. If `🧬 Absorbed: <source>` doesn't fit, the title becomes
+`🧬 Absorbed!` and the source name moves to the subtitle. Levels use vanilla `enchantment.level.N`
+(`Blast Proof III`). Server-built text goes through `Texts.tr`, so vanilla clients get the English text instead of
+raw keys. The exception is death messages, which vanilla clients show as the raw key.
 
 ## CurseForge page
 
@@ -109,7 +165,7 @@ generated: run `python3 scripts/gen-source-table.py` first.
 
 <p align="center"><em>Sneak. Absorb. Become.</em></p>
 
-**Absorbaholic** lets you eat the world. Sneak with an empty hand, hold use on a block or a weakened mob, and
+**Absorbaholic** lets you eat the world. Sneak with both hands empty, hold use on a block or a weakened mob, and
 **absorb it**: the thing is gone, and you keep **one of its traits and one of its weaknesses**. Obsidian makes you
 blast-proof but slow. A blaze lets you throw fireballs, and rain starts to hurt.
 
@@ -118,15 +174,17 @@ default**. Operators can switch it any time with `/absorbaholic on|off`.
 
 ## What it does
 
-1. **Sneak** with an **empty main hand** and **hold use** on a block (lava counts) or a mob at **25 % health or
-   less**.
-2. After **1.5 s** it's absorbed: blocks vanish without drops, mobs without loot or XP.
+1. **Sneak** with **both hands empty** and **hold use** on a block, a lava source or a mob at **25 % health or
+   less**. Sneak and look first: a small hint shows what it gives.
+2. After **1.5 s** it's absorbed: blocks vanish without drops, mobs without loot or XP. Nothing valuable is
+   destroyed by accident: full chests, hives with bees and mobs wearing gear are refused.
 3. You gain its **trait** and its **weakness** at level I. Absorb it again for +1 on both, up to **III**.
 4. Every absorption rolls: **15 % mutation** (trait or weakness +2) or **2 % pure** (no weakness gained).
 5. Up to **20 sources** at once. A new one past the cap pushes out your oldest.
-6. A **10 s** cooldown, then go again.
+6. A **10 s** cooldown (relogging doesn't skip it), then go again.
 
 Traits survive death by default (per world). The dragon egg doesn't care: its weakness wipes everything.
+Creative and Spectator players never absorb, and their traits sleep until they're back in Survival.
 
 ## Features
 
@@ -136,7 +194,7 @@ Traits survive death by default (per world). The dragon egg doesn't care: its we
 - 🎲 **Mutations:** 15 % mutate, 2 % come out pure, with their own fanfare and a server-wide shout.
 - ⚡ **Real abilities:** blink, fireballs, sonic boom, glide, double jump, wall climbing, lava walking. Sneak + swing, sneak + jump or double-tap sneak, no extra keys.
 - 🔍 **Discover as you go:** sneak and look to see what something gives. Undiscovered sources show `???`.
-- 📜 **Traits screen:** press K to see everything you carry.
+- 📜 **My Traits:** press K (or use the Mod Menu button) to see everything you carry.
 - 🌍 **Per-world settings:** mode, keep-on-death, hints and trait slots via `/absorbaholic`.
 - 🛡️ **Safety caps:** nothing one-shots you, and no build is truly immortal.
 - 🔕 **Your call on noise:** mute the sound, the messages or both (Mod Menu or `/absorbaholic-notify`).
@@ -147,8 +205,9 @@ Traits survive death by default (per world). The dragon egg doesn't care: its we
 ## Notification settings
 
 Every absorption shows a title, an actionbar line and a sound. Turn off the sound, the messages or both from
-Mod Menu (Mods → Absorbaholic → config), or with `/absorbaholic-notify sound off` /
-`/absorbaholic-notify message off`. Saved on your computer, applied on every server.
+Mod Menu (Mods → Absorbaholic → config: **Absorb Sound** / **Absorb Message**), or with
+`/absorbaholic-notify sound off` / `/absorbaholic-notify message off`. Saved on your computer, applied on every
+server.
 
 ## Sources
 
@@ -363,8 +422,11 @@ Attribute clamps (on the final value, whatever else changes it):
 - Players without the mod on their client can't absorb. Their existing traits still work on the server, except
   wall climbing, lava walking and gliding, and their messages are in English.
 - Sources removed by a datapack stay on players but do nothing. `/absorbaholic remove` cleans them up.
-- Containers with items inside can't be absorbed. Empty them first.
-- Bedrock in the bottom 5 layers and at the Nether roof is protected.
+- Chests, furnaces, lecterns and campfires with items, hives with bees, and mobs wearing or carrying gear are
+  refused. Empty them first.
+- You can't absorb where you can't break blocks: spawn protection, the world border, Adventure mode, claim mods.
+- Bedrock is protected in the bottom 5 layers, under the Nether roof and everywhere in the End.
+- An item in your off hand (a shield, a torch) blocks absorbing, so its vanilla use keeps working.
 - Absorbing the Ender Dragon counts as killing it: the portal and the egg appear.
 - Other mods' attribute bonuses stack with ours, and the caps apply to the total.
 

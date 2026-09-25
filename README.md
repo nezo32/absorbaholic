@@ -14,39 +14,49 @@ It's a Fabric mod for Minecraft Java 26.2–26.3 (in [`fabric/`](fabric/)).
 
 ## What it does
 
-When the mode is on, a player who sneaks with an **empty main hand** and holds **use** on something absorbable
+When the mode is on, a player who sneaks with **both hands empty** and holds **use** on something absorbable
 does the following:
 
-1. **Channel:** 1.5 seconds of holding, with particles and a rising hum. Letting go, looking away, taking the
-   item back in hand or walking out of reach cancels it.
-2. **Target:** a block (lava counts), or a living mob at **25 % health or less**. Blocks with no source entry,
-   bedrock near the world floor and the Nether roof, and containers that still hold items can't be absorbed.
-   You get a short message saying why.
+1. **Channel:** 1.5 seconds of holding, with particles and a rising chime. Letting go, looking away, picking
+   something up, opening a screen or walking out of reach cancels it.
+2. **Target:** a block, a fluid source block (lava; flowing fluid doesn't count, water never does), or a living
+   mob at **25 % health or less**. Blocks and mobs with no source entry can't be absorbed. These are refused with
+   a short message on the actionbar:
+   - bedrock in the bottom 5 layers, in the top 5 under the Nether roof, or anywhere in the End;
+   - blocks you aren't allowed to break: spawn protection, the world border, Adventure mode, claim mods;
+   - containers, lecterns and campfires that still hold items, and beehives or nests with bees inside;
+   - mobs carrying anything that would be lost: armor, held items, a saddle, a chest or an inventory.
 3. **Consume:** the block disappears with no drops and no XP, and the mob vanishes with no loot and no XP.
 4. **Levels:** the first absorption of a source gives its trait and its weakness at level I. Each repeat adds
    +1 to both, up to the source's max level (III for almost everything). Once the trait is maxed, you're
    refused and nothing is consumed.
 5. **Roll:** every absorption rolls once. **15 % mutation:** 50/50 either the trait gets +2 (weakness +1) or the
    weakness gets +2 (trait +1). **2 % pure:** the trait gets +1 and the weakness nothing. Mutations and pure
-   absorptions get their own sound and particles, and a chat broadcast.
+   absorptions get their own sound and particles, and a chat broadcast to everyone.
 6. **Slots:** each player holds up to 20 different sources (operators can change it per world). Absorbing a new
    one at the cap evicts your oldest source, with a notice.
 7. **Feedback:** a title `🧬 Absorbed: Obsidian`, an actionbar `Blast Proof I · Dense I` and a sound. Each player
    can turn off the sound, the messages, or both (see [Notification settings](#notification-settings)).
-8. **Cooldown:** 10 seconds per player before the next absorption.
+8. **Cooldown:** 10 seconds per player before the next absorption. Relogging or dying doesn't reset it (and
+   doesn't reset ability cooldowns either).
 
-Traits and weaknesses stay through death by default (per world: `/absorbaholic keep-on-death`). The dragon egg
-is the exception: its weakness wipes **everything** on any death.
+Traits and weaknesses stay through death by default (per world: `/absorbaholic keep-on-death`). With it off,
+a death loses every source, unless the mode itself is off at that moment (dormant traits are never deleted).
+The dragon egg is the exception: its weakness wipes **everything** on any death.
 
 Creative and Spectator players never absorb, and their traits and weaknesses are dormant. Turning the mode off
 makes every trait and weakness dormant too, and nobody loses anything: they wake up when the mode comes back.
 
 More things you'll notice:
 
-- **Hints:** sneak and look at something absorbable to see its source, trait and weakness. Sources nobody in
-  the world has absorbed yet show `???`. Operators can turn hints off per world.
-- **Traits screen:** press **K** (rebindable), run `/absorbaholic traits`, or use the button in the Mod Menu
-  settings. Every source you carry, with its icon, levels, tier and a mutated/pure tag.
+- **Hints:** sneak and look at a block, fluid or mob in reach to see a small box next to the crosshair: the
+  source name in its tier color, its trait and weakness (`???` for sources nobody in this world has absorbed
+  yet), and what's in the way: "Weaken it to 25% health first", "Protected", "Only a source block works",
+  "Already at max level", "Empty your hand to absorb", or "Not absorbable". A ring around the crosshair shows
+  the channel. No hint in third person, with F1, in Creative or Spectator, or when an operator turns hints off.
+- **Traits screen (My Traits):** press **K** (**Open Traits** under Controls → Absorbaholic), run
+  `/absorbaholic traits`, or use the **My Traits** button in the Mod Menu settings. Every source you carry, with
+  its icon, tier, trait and weakness levels and a Mutated/Pure tag.
 - **Aura:** players with traits give off faint particles in the mixed color of their sources.
 - **Abilities** need no extra keys: sneak + swing at air, sneak + jump, jump in mid-air, or double-tap sneak.
   Only one ability fires per trigger (the oldest ready one).
@@ -55,8 +65,10 @@ More things you'll notice:
 
 Every absorption shows a title and an actionbar line and plays a sound. Each player can turn off either one,
 or both. With [Mod Menu](https://modrinth.com/mod/modmenu) installed, open Mods → Absorbaholic → the config
-button, and switch **Absorb sound** / **Absorb messages**. Without Mod Menu, use the client command
-`/absorbaholic-notify sound off`, `/absorbaholic-notify message off`, or `/absorbaholic-notify status`.
+button, and switch **Absorb Sound** / **Absorb Message** (the same screen has a **My Traits** button). Without
+Mod Menu, use the client command `/absorbaholic-notify sound off`, `/absorbaholic-notify message off`, or
+`/absorbaholic-notify status`; `sound` or `message` without a value flips it. With messages off you get no
+title, actionbar line or eviction notice.
 
 Settings are stored on your computer in `config/absorbaholic.json` and apply on any server that runs
 Absorbaholic. Players who join without the mod on their client always get the default title, message and sound.
@@ -278,15 +290,20 @@ Attribute clamps (on the final value, whatever else changes it):
 | Command | Who | What it does |
 |---|---|---|
 | `/absorbaholic` | anyone | Shows every setting of this world |
-| `/absorbaholic on\|off\|status` | operators (level 2) | Turns Absorbaholic Mode on or off for this world |
-| `/absorbaholic keep-on-death on\|off\|status` | operators | Whether traits survive death (default on) |
-| `/absorbaholic hints on\|off\|status` | operators | The sneak hint near the crosshair (default on) |
-| `/absorbaholic max [n]` | operators | Trait slots per player, 1–64 (default 20). Lowering it never removes traits already held |
+| `/absorbaholic status` | anyone | Whether Absorbaholic Mode is on |
+| `/absorbaholic on\|off` | operators (level 2) | Turns Absorbaholic Mode on or off for this world |
+| `/absorbaholic keep-on-death [status]` | anyone | Whether traits survive death (default on) |
+| `/absorbaholic keep-on-death on\|off` | operators | Changes it |
+| `/absorbaholic hints [status]` | anyone | Whether the sneak hint is shown (default on) |
+| `/absorbaholic hints on\|off` | operators | Changes it |
+| `/absorbaholic max` | anyone | Trait slots per player (default 20) |
+| `/absorbaholic max <n>` | operators | Sets the slots. Values outside 1–64 are clamped (the reply says so). Lowering it never removes traits already held |
 | `/absorbaholic traits` | anyone | Your own traits (the traits screen with the mod, a chat list without it) |
 | `/absorbaholic traits <player>` | operators | Someone else's traits |
-| `/absorbaholic remove <player> <source>` | operators | Removes one source from a player (suggests their sources) |
+| `/absorbaholic remove <player> <source>` | operators | Removes one source from a player. Suggests their sources; `coal` works for `absorbaholic:coal` |
 | `/absorbaholic reset <player>` | operators | Removes all of a player's sources |
-| `/absorbaholic-notify sound\|message\|status [on\|off]` | anyone, client side | Your own [notification settings](#notification-settings) |
+| `/absorbaholic-notify status` | anyone, client side | Shows your [notification settings](#notification-settings) |
+| `/absorbaholic-notify sound\|message [on\|off]` | anyone, client side | Sets one (no value flips it) |
 
 In single-player, operator commands need cheats: Allow Commands on, or Open to LAN with Allow Cheats on.
 
@@ -343,14 +360,14 @@ is sent to every player.
 |---|---|
 | `kind` | `block` or `entity`. Fluids use their block (`minecraft:lava`) |
 | `targets` | Block or entity type ids and `#tags`. A direct id beats a tag; between two equal matches the smaller source id wins (logged as a warning) |
-| `name` | Optional translation key for the source name. Default: the first target's name |
+| `name` | Optional translation key for the source name. Default: the vanilla name of the target when there is exactly one direct id, else `absorbaholic.source.<path>` |
 | `icon` | Optional item for screens. Default: the block's item or the mob's spawn egg |
 | `color` | Aura color, `#RRGGBB` |
 | `tier` | `common`, `uncommon`, `rare`, `epic` or `legendary` |
 | `max_level` | 1–5, default 3 |
 | `trait`, `weakness` | `key` (names come from `absorbaholic.trait.<key>` / `absorbaholic.weakness.<key>` and their `.desc`), plus any `attributes` and `behaviors` |
 | `attributes[]` | Any attribute id, `operation` `add_value` / `add_multiplied_base` / `add_multiplied_total`, `amount` |
-| `behaviors[]` | `type` (`absorbaholic:<id>`) plus that behavior's parameters. The shipped files use all 30 types; the catalog with every parameter is in the Javadoc of each class in [`trait/behavior/`](fabric/src/main/java/dev/absorbaholic/trait/behavior/) |
+| `behaviors[]` | `type` (`absorbaholic:<id>`) plus that behavior's parameters. The shipped files use all 31 types; the catalog with every parameter is in the Javadoc of each class in [`trait/behavior/`](fabric/src/main/java/dev/absorbaholic/trait/behavior/) |
 
 Level-scaled numbers (`amount`, `multiplier`, `radius` …) are either an array indexed by level (I, II, III …), at
 least `max_level` long, or a single number multiplied by the level. Every behavior accepts the shared
@@ -400,12 +417,18 @@ description.
   get no hint, screen or aura. Their messages come in English, and deaths from weakness damage show a raw
   translation key.
 - **Removed sources stay stored.** When a datapack removes or disables a source, players keep the entry, but it
-  does nothing. The traits screen shows it greyed out with its id, and `/absorbaholic remove` cleans it up.
+  does nothing. The traits screen shows it greyed out as inactive, and `/absorbaholic remove` cleans it up.
   Re-adding the source brings it back.
-- **Containers must be empty.** A chest, barrel, furnace or shulker box with items in it is refused, so nothing is
-  deleted by accident.
-- **Bedrock near the floor is protected.** It can be absorbed elsewhere (for example a block you placed higher
-  up), but never in the bottom 5 layers or at the Nether roof.
+- **Nothing is deleted by accident.** A chest, barrel, furnace, shulker box, lectern or campfire with items in it,
+  a beehive with bees inside and a mob wearing or carrying anything (armor, a saddle, a chest, an allay's item)
+  are refused. Empty them first.
+- **Bedrock is protected where it holds the world together:** the bottom 5 layers, the top 5 under the Nether
+  roof and the whole End (exit portal, gateways). Anywhere else, for example a block you placed, it's fair game.
+- **Both hands must be empty.** A shield or torch in the off hand keeps its vanilla use. Sneak-using a block or
+  mob whose trait you already maxed (or a mob that is still too healthy) also works as in vanilla, so trapdoors,
+  furnaces and horse inventories stay usable.
+- **You can't absorb where you can't break.** Spawn protection, the world border, Adventure mode and claim mods
+  that hook Fabric's block-break event all refuse.
 - **Absorbing the Ender Dragon** counts as killing it: the exit portal and the egg appear as usual.
 - **Other attribute mods stack with ours.** The clamps apply to the final value, so our modifiers shrink to keep
   it in range. If another mod (or an effect) already pushed a value past a clamp, we just don't push it further.
